@@ -1,0 +1,110 @@
+:root {
+  --bg-main: #121212;
+  --bg-card: #1e1e1e;
+  --accent: #ff9b00;
+  --text-primary: #ffffff;
+  --tier-s: #ff4d4d;
+  --tier-a: #ffad33;
+  --tier-b: #ffff33;
+  --tier-c: #33ff33;
+  --tier-d: #3399ff;
+}
+
+body { margin: 0; background: var(--bg-main); color: var(--text-primary); font-family: 'Noto Sans JP', sans-serif; }
+
+/* 既存ナビゲーション */
+.site-header { background: #000; padding: 10px 20px; border-bottom: 2px solid var(--accent); position: sticky; top: 0; z-index: 100; }
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.site-tabs { display: flex; gap: 15px; }
+.site-tab { color: #888; text-decoration: none; font-size: 14px; padding: 5px; }
+.site-tab.active { color: var(--accent); font-weight: bold; }
+.header-nav { display: flex; gap: 5px; }
+.nav-btn { background: none; border: none; color: #888; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
+.nav-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+/* コンテンツエリア */
+.main-content { padding: 20px; }
+.view { display: none; }
+.view.active { display: block; }
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+/* ティア表レイアウト */
+.tier-row { display: flex; margin-bottom: 5px; min-height: 90px; background: #222; }
+.tier-label { width: 65px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: #000; }
+.tier-color-s { background: var(--tier-s); }
+.tier-color-a { background: var(--tier-a); }
+.tier-color-b { background: var(--tier-b); }
+.tier-color-c { background: var(--tier-c); }
+.tier-color-d { background: var(--tier-d); }
+.tier-row-content { flex: 1; display: flex; flex-wrap: wrap; padding: 10px; gap: 12px; min-height: 70px; }
+
+/* クエストグリッド */
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+
+/* カードスタイル */
+.tier-card { width: 80px; text-align: center; cursor: pointer; }
+.tier-card-img-container { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #555; overflow: hidden; margin: 0 auto; background: #333; }
+.tier-card-img { width: 100%; height: 100%; object-fit: cover; }
+.tier-card-name { font-size: 11px; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.quest-style { width: 140px; }
+.quest-style .tier-card-img-container { width: 120px; height: 68px; border-radius: 8px; }
+
+/* 🔍 詳細画面の画像（全体が見えるように contain 指定） */
+.detail-img-container {
+  width: 100%;
+  max-height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+.detail-img-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* 画像を縮小して全体を表示 */
+}
+
+/* 🔶 ステータスラベル */
+.status-container { background: #fffdf5; border: 1px solid #e2d2b2; border-radius: 4px; overflow: hidden; color: #333; }
+.status-row { display: flex; border-bottom: 1px solid #ddd; padding: 8px; align-items: center; }
+.status-row:last-child { border-bottom: none; }
+.status-label { 
+  background: linear-gradient(to bottom, #ff9b00, #ff7b00); color: #fff; 
+  font-size: 11px; font-weight: bold; padding: 3px 0; width: 55px; 
+  text-align: center; border-radius: 6px; margin-right: 12px; flex-shrink: 0; 
+}
+.status-value { font-size: 13px; flex: 1; line-height: 1.4; }
+.text-blue { color: #0076ff; font-weight: bold; }
+
+/* モーダル共通 */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: #fff; color: #333; width: 95%; max-width: 500px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+.modal-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 12px; margin-bottom: 4px; color: #666; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+.form-row { display: flex; gap: 10px; }
+
+
+/* 🔶 モンスト風ステータス */
+.status-container { background: #fffdf5; border: 1px solid #e2d2b2; border-radius: 4px; overflow: hidden; color: #333; }
+.status-row { display: flex; border-bottom: 1px solid #ddd; padding: 8px; align-items: center; }
+.status-label { 
+  background: linear-gradient(to bottom, #ff9b00, #ff7b00); color: #fff; 
+  font-size: 11px; font-weight: bold; padding: 3px 0; width: 55px; 
+  text-align: center; border-radius: 6px; margin-right: 12px; flex-shrink: 0; 
+}
+.status-value { font-size: 13px; flex: 1; }
+.text-blue { color: #0076ff; font-weight: bold; }
+
+/* モーダル */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: #fff; color: #333; width: 95%; max-width: 500px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+.modal-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; }
+.btn-primary { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
