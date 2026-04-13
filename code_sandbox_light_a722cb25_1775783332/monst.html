@@ -127,3 +127,26 @@
 <script src="js/monst.js"></script>
 </body>
 </html>
+<script type="module">
+  // Firebaseの読み込み
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 手順1でメモした自分のconfigに書き換えてください
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "...",
+    appId: "..."
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // monst.jsから使えるようにグローバルに公開
+  window.db = db;
+  window.fsMethods = { doc, setDoc, getDoc };
+</script>
+<script src="js/monst.js" type="module"></script> ```

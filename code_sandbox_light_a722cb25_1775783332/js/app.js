@@ -19,8 +19,8 @@ let pendingDeleteId = null;       // 削除確認用
 /* ==========================================================
    初期化
    ========================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadData();
   setupEventListeners();
   renderAll();
 });
@@ -28,19 +28,33 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ==========================================================
    ストレージ
    ========================================================== */
-function loadData() {
+const BIN_ID  = '69dc5298856a682189292896';
+const API_KEY = '$2a$10$dsM39E4/AjtLgFPbVrJtXO3BneHVnIp3gyqTdgmT.cFyUBaG17qRS';
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+async function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    allProducts = raw ? JSON.parse(raw) : getSampleData();
+    const res  = await fetch(API_URL + '/latest', {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const json = await res.json();
+    allProducts = json.record?.products ?? getSampleData();
   } catch (e) {
     console.error('データ読込エラー', e);
-    allProducts = [];
+    allProducts = getSampleData();
   }
 }
 
-function saveData() {
+async function saveData() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allProducts));
+    await fetch(API_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify({ products: allProducts })
+    });
   } catch (e) {
     console.error('データ保存エラー', e);
     showToast('保存に失敗しました', 'error');
