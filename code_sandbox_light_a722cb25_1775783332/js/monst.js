@@ -1,238 +1,730 @@
-const TIER_ORDER = ['S', 'A', 'B', 'C', 'D'];
-const STORAGE_KEY = 'monst_db_integrated_v4';
+/* ==========================================================
+   モンスト攻略  —  monst.js  (完全版)
+   Bin①: monst-characters  → 全体キャラティア表
+   Bin②: monst-quests      → クエスト＋適正キャラ
+   ========================================================== */
 
-let allData = [];
-let isEditMode = false;
-let draggedId = null;
-let currentQuestId = null; // 選択中のクエストIDを保持
+// ===== JSONBin設定 =====
+const API_KEY       = '$2a$10$joap43smKkXaRUqJnyLmH.WXhlFfhDqp9syZ978elHejCGT8amtQC';
+const CHAR_BIN_URL  = 'https://api.jsonbin.io/v3/b/69dd8cfd856a6821892edf4a';
+const QUEST_BIN_URL = 'https://api.jsonbin.io/v3/b/69dd8d5536566621a8adfdf0';
+
+const HEADERS_READ = {
+  'X-Master-Key': API_KEY,
+  'X-Bin-Meta': 'false'
+};
+const HEADERS_WRITE = {
+  'Content-Type': 'application/json',
+  'X-Master-Key': API_KEY,
+  'X-Bin-Versioning': 'false'
+};
+
+// ===== 定数 =====
+const TIER_ORDER = ['S', 'A', 'B', 'C', 'D'];
+
+const TIER_COLORS = {
+  S: '#c0392b', A: '#d4750a', B: '#b8960a',
+  C: '#2e7d52', D: '#2563a8', '未分類': '#888884'
+};
+
+const FORM_COLORS = {
+  '進化':     '#2563a8',
+  '神化':     '#7b3fa0',
+  '獣神化':   '#c0392b',
+  '獣神化・改':'#d4750a',
+  '真獣神化': '#2e7d52'
+};
 
 const CATEGORIES = {
   character: ['火属性', '水属性', '木属性', '光属性', '闇属性'],
-  quest: ['黎絶', '轟絶', '爆絶', '超絶', '超究極', '天魔(試練)', '天魔(空中庭園)', '禁忌']
+  quest:     ['黎絶', '轟絶', '爆絶', '超絶', '超究極', '天魔(試練)', '天魔(空中庭園)', '禁忌','星墓']
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  allData = saved ? JSON.parse(saved) : [];
+// ===== 状態管理 =====
+let characters     = [];
+let quests         = [];
+let isEditMode     = false;
+let draggedId      = null;
+let currentQuestId = null;
+let activeCat      = 'all';
+let pendingDeleteId= null;
+let pendingDeleteType = null;
+let searchTerm     = '';
+let selectedForm   = '';
+
+/* ==========================================================
+   初期化
+   ========================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  showLoading(true);
+  await loadAllData();
+  showLoading(false);
   setupEventListeners();
   render();
 });
 
+/* ==========================================================
+   JSONBin 読み込み
+   ========================================================== */
+async function loadAllData() {
+  try {
+    const [cRes, qRes] = await Promise.all([
+      fetch(CHAR_BIN_URL  + '/latest', { headers: HEADERS_READ }),
+      fetch(QUEST_BIN_URL + '/latest', { headers: HEADERS_READ })
+    ]);
+    const cJson = await cRes.json();
+    const qJson = await qRes.json();
+    characters = cJson.characters ?? [];
+    quests     = qJson.quests     ?? [];
+  } catch (e) {
+    console.error('データ読込エラー', e);
+    characters = [];
+    quests     = [];
+  }
+}
+
+/* ==========================================================
+   JSONBin 保存
+   ========================================================== */
+async function saveCharacters() {
+  try {
+    const res = await fetch(CHAR_BIN_URL, {
+      method: 'PUT',
+      headers: HEADERS_WRITE,
+      body: JSON.stringify({ characters })
+    });
+    if (!res.ok) showToast('キャラ保存失敗: ' + res.status, 'error');
+  } catch (e) {
+    showToast('キャラ保存失敗', 'error');
+  }
+}
+
+async function saveQuests() {
+  try {
+    const res = await fetch(QUEST_BIN_URL, {
+      method: 'PUT',
+      headers: HEADERS_WRITE,
+      body: JSON.stringify({ quests })
+    });
+    if (!res.ok) showToast('クエスト保存失敗: ' + res.status, 'error');
+  } catch (e) {
+    showToast('クエスト保存失敗', 'error');
+  }
+}
+
+/* ==========================================================
+   イベントリスナー
+   ========================================================== */
 function setupEventListeners() {
+
+  // ビュー切り替え
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
-      const targetView = btn.dataset.view;
-      // 「最強ティア表」ボタンを直接押した時だけ、全体表示に戻す
-      if (targetView === 'tier' && !currentQuestId) {
-        currentQuestId = null;
-      }
-      // 「クエスト一覧」ボタンを押した時は、選択を解除して一覧へ
-      if (targetView === 'list') {
-        currentQuestId = null;
-      }
-
+      currentQuestId = null;
+      document.getElementById('btn-back-to-all').style.display = 'none';
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(`view-${targetView}`).classList.add('active');
+      document.getElementById(`view-${btn.dataset.view}`).classList.add('active');
       render();
     };
   });
 
+  // 編集モード切り替え
   document.getElementById('btn-edit-mode').onclick = () => {
     isEditMode = !isEditMode;
-    const isVisible = isEditMode ? 'block' : 'none';
-    document.getElementById('btn-add-char').style.display = isVisible;
-    document.getElementById('btn-add-quest').style.display = isVisible;
-    document.getElementById('unclassified-container').style.display = isVisible;
-    document.getElementById('btn-edit-mode').classList.toggle('active', isEditMode);
+    const btn = document.getElementById('btn-edit-mode');
+    if (isEditMode) {
+      btn.classList.add('active');
+      btn.innerHTML = '<i class="fas fa-lock-open"></i> 編集中';
+      document.body.classList.add('edit-mode');
+      document.getElementById('tier-edit-actions').style.display  = 'flex';
+      document.getElementById('quest-edit-actions').style.display = 'block';
+      document.getElementById('unclassified-container').style.display = 'block';
+      showToast('編集モードを有効にしました');
+    } else {
+      btn.classList.remove('active');
+      btn.innerHTML = '<i class="fas fa-edit"></i> 編集';
+      document.body.classList.remove('edit-mode');
+      document.getElementById('tier-edit-actions').style.display  = 'none';
+      document.getElementById('quest-edit-actions').style.display = 'none';
+      document.getElementById('unclassified-container').style.display = 'none';
+      showToast('編集モードを終了しました');
+    }
     render();
   };
 
-  document.getElementById('btn-add-char').onclick = () => openEditModal('character');
+  // キャラ・クエスト追加
+  document.getElementById('btn-add-char').onclick  = () => openEditModal('character');
   document.getElementById('btn-add-quest').onclick = () => openEditModal('quest');
-  document.getElementById('btn-close-modal').onclick = closeEditModal;
+
+  // 全体に戻るボタン
+  document.getElementById('btn-back-to-all').onclick = () => {
+    currentQuestId = null;
+    document.getElementById('btn-back-to-all').style.display = 'none';
+    document.getElementById('btn-add-char').style.display = isEditMode ? 'inline-flex' : 'none';
+    document.getElementById('tier-title').innerHTML = '<i class="fas fa-crown"></i> 全キャラ最強ランキング';
+    render();
+  };
+
+  // モーダルを閉じる
+  document.getElementById('btn-close-modal').onclick  = closeEditModal;
   document.getElementById('btn-cancel-modal').onclick = closeEditModal;
-  document.getElementById('product-form').onsubmit = (e) => { e.preventDefault(); handleSave(); };
-  document.getElementById('search-input').oninput = (e) => render(e.target.value.toLowerCase());
+  document.getElementById('modal-product').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-product')) closeEditModal();
+  });
+
+  // 詳細モーダルを閉じる
+  document.getElementById('btn-detail-close').onclick = closeDetail;
+  document.getElementById('modal-detail').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-detail')) closeDetail();
+  });
+
+  // 削除確認
+  document.getElementById('btn-confirm-cancel').onclick = closeConfirmModal;
+  document.getElementById('btn-confirm-ok').onclick     = handleConfirmDelete;
+
+  // フォーム送信
+  document.getElementById('product-form').onsubmit = (e) => {
+    e.preventDefault();
+    handleSave();
+  };
+
+  // 検索
+  document.getElementById('search-input').oninput = (e) => {
+    searchTerm = e.target.value.toLowerCase().trim();
+    render();
+  };
+
+  // カテゴリフィルター
+  document.getElementById('category-filters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    document.querySelectorAll('#category-filters .chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCat = btn.dataset.category;
+    render();
+  });
+
+  // 形態セレクター
+  document.getElementById('p-form-selector').addEventListener('click', (e) => {
+    const btn = e.target.closest('.form-type-btn');
+    if (!btn) return;
+    document.querySelectorAll('.form-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedForm = btn.dataset.form;
+    updateFormFields();
+  });
+
+  // ESCキー
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeEditModal();
+      closeDetail();
+      closeConfirmModal();
+    }
+  });
 }
 
-function render(filterTerm = '') {
+/* ==========================================================
+   形態に応じてフォームフィールドを切り替え
+   ========================================================== */
+function updateFormFields() {
+  const connectField = document.getElementById('field-connect');
+  const shotField    = document.getElementById('field-shot-skill');
+  const assistField  = document.getElementById('field-assist-skill');
+
+  connectField.style.display = selectedForm === '獣神化・改' ? 'block' : 'none';
+  shotField.style.display    = selectedForm === '真獣神化'   ? 'block' : 'none';
+  assistField.style.display  = selectedForm === '真獣神化'   ? 'block' : 'none';
+}
+
+/* ==========================================================
+   描画
+   ========================================================== */
+function render() {
   const tierContainer = document.getElementById('tier-container');
-  const productsGrid = document.getElementById('products-grid');
-  const tierPool = document.getElementById('tier-pool');
-  const viewTitle = document.getElementById('tier-title');
+  const productsGrid  = document.getElementById('products-grid');
+  const tierPool      = document.getElementById('tier-pool');
 
   if (tierContainer) tierContainer.innerHTML = '';
-  if (productsGrid) productsGrid.innerHTML = '';
-  if (tierPool) tierPool.innerHTML = '';
+  if (productsGrid)  productsGrid.innerHTML  = '';
+  if (tierPool)      tierPool.innerHTML      = '';
 
-  // 【重要】クエスト専用適正表示
+  // クエスト適正キャラ表示モード
   if (currentQuestId) {
-    const quest = allData.find(d => d.id === currentQuestId);
+    const quest = quests.find(q => q.id === currentQuestId);
     if (quest) {
-      viewTitle.textContent = `【適正】${quest.name}`;
-      renderTierSystem(tierContainer, tierPool, quest.suitableChars || [], filterTerm);
-      // ビューを確実に「tier」に向ける
+      document.getElementById('tier-title').innerHTML =
+        `<i class="fas fa-crosshairs"></i> 【適正】${escHtml(quest.name)}`;
+      document.getElementById('btn-back-to-all').style.display = 'inline-flex';
+      if (isEditMode) document.getElementById('btn-add-char').style.display = 'inline-flex';
+      renderTierBoard(tierContainer, tierPool, quest.suitableChars || [], 'suitableChar');
       document.getElementById('view-list').classList.remove('active');
       document.getElementById('view-tier').classList.add('active');
       return;
     }
   }
 
-  // 通常モード
-  const activeTab = document.querySelector('.nav-btn.active').dataset.view;
+  const activeTab = document.querySelector('.nav-btn.active')?.dataset.view;
+
   if (activeTab === 'tier') {
-    viewTitle.textContent = '全キャラ最強ランキング';
-    renderTierSystem(tierContainer, tierPool, allData.filter(d => d.type === 'character'), filterTerm);
+    document.getElementById('tier-title').innerHTML =
+      '<i class="fas fa-crown"></i> 全キャラ最強ランキング';
+    let filtered = characters;
+    if (searchTerm) {
+      filtered = filtered.filter(c => c.name.toLowerCase().includes(searchTerm));
+    }
+    renderTierBoard(tierContainer, tierPool, filtered, 'character');
   } else {
-    allData.filter(d => d.type === 'quest').forEach(q => {
-      if (q.name.toLowerCase().includes(filterTerm)) productsGrid.appendChild(createCard(q));
-    });
+    let filtered = quests;
+    if (activeCat !== 'all') {
+      filtered = filtered.filter(q => q.category === activeCat);
+    }
+    if (searchTerm) {
+      filtered = filtered.filter(q => q.name.toLowerCase().includes(searchTerm));
+    }
+    if (filtered.length === 0) {
+      productsGrid.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-scroll"></i>
+          <p>クエストがまだありません。編集モードで追加してください。</p>
+        </div>`;
+    } else {
+      filtered.forEach(q => productsGrid.appendChild(createQuestCard(q)));
+    }
   }
 }
 
-function renderTierSystem(container, pool, dataList, filter) {
+/* ── ティア表描画 ── */
+function renderTierBoard(container, pool, dataList, context) {
   TIER_ORDER.forEach(tier => {
-    const row = document.createElement('div');
+    const items = dataList.filter(d => d.tier === tier);
+    const row   = document.createElement('div');
     row.className = 'tier-row';
-    row.innerHTML = `<div class="tier-label tier-color-${tier.toLowerCase()}">${tier}</div><div class="tier-row-content" data-tier="${tier}"></div>`;
-    setupDropZone(row.querySelector('.tier-row-content'));
+
+    const label = document.createElement('div');
+    label.className = `tier-label tier-color-${tier.toLowerCase()}`;
+    label.textContent = tier;
+
+    const zone = document.createElement('div');
+    zone.className = 'tier-row-content' + (items.length === 0 ? ' empty' : '');
+    zone.dataset.tier = tier;
+
+    items.forEach(d => zone.appendChild(createCharCard(d, context)));
+    if (isEditMode) setupDropZone(zone, null, context);
+
+    row.appendChild(label);
+    row.appendChild(zone);
     container.appendChild(row);
   });
-  setupDropZone(pool, '未分類');
 
-  dataList.forEach(item => {
-    if (!item.name.toLowerCase().includes(filter)) return;
-    const card = createCard(item);
-    const target = (item.tier && item.tier !== '未分類') ? Array.from(container.querySelectorAll('.tier-row-content')).find(c => c.dataset.tier === item.tier) : pool;
-    if (target) target.appendChild(card);
-  });
+  // 未分類
+  const unassigned = dataList.filter(d => !TIER_ORDER.includes(d.tier));
+  unassigned.forEach(d => pool.appendChild(createCharCard(d, context)));
+  if (isEditMode) setupDropZone(pool, '未分類', context);
 }
 
-function createCard(item) {
+/* ── キャラカード生成 ── */
+function createCharCard(item, context) {
   const card = document.createElement('div');
-  card.className = `tier-card ${item.type === 'quest' ? 'quest-style' : ''}`;
-  if (isEditMode) {
-    card.draggable = true;
-    card.ondragstart = () => { draggedId = item.id; card.classList.add('dragging'); };
-    card.ondragend = () => { card.classList.remove('dragging'); draggedId = null; };
-  }
+  card.className = 'monst-card';
+  card.dataset.id = item.id;
+
+  const formBadgeClass = {
+    '進化':     'badge-進化',
+    '神化':     'badge-神化',
+    '獣神化':   'badge-獣神化',
+    '獣神化・改':'badge-獣神化改',
+    '真獣神化': 'badge-真獣神化'
+  }[item.form] || '';
+
+  const formLabel = {
+    '獣神化・改': '獣改',
+    '真獣神化':   '真獣'
+  }[item.form] || (item.form || '');
+
   card.innerHTML = `
-    <div class="tier-card-img-container">
-      ${item.image_url ? `<img src="${item.image_url}" class="tier-card-img">` : `<div class="tier-card-img-placeholder"><i class="fas fa-user"></i></div>`}
+    <div class="monst-card-img-wrap">
+      ${item.image_url
+        ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}"
+             onerror="this.parentElement.innerHTML='<div class=\\'monst-card-img-placeholder\\'><i class=\\'fas fa-user\\'></i></div>'">`
+        : `<div class="monst-card-img-placeholder"><i class="fas fa-user"></i></div>`}
     </div>
-    <div class="tier-card-name">${item.name}</div>
+    ${formBadgeClass
+      ? `<span class="monst-form-badge ${formBadgeClass}">${escHtml(formLabel)}</span>`
+      : ''}
+    <div class="monst-card-name">${escHtml(item.name)}</div>
+    ${isEditMode
+      ? `<button class="card-delete-btn" title="削除"><i class="fas fa-times"></i></button>`
+      : ''}
   `;
-  card.onclick = () => {
+
+  // クリック
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.card-delete-btn')) return;
     if (isEditMode) {
-      openEditModal(item.type, item);
-    } else if (item.type === 'quest') {
-      currentQuestId = item.id; // クエストIDをセットして
-      render(); // 描画
+      openEditModal('character', item);
     } else {
       showDetail(item);
     }
-  };
+  });
+
+  // 削除ボタン
+  const delBtn = card.querySelector('.card-delete-btn');
+  if (delBtn) {
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      confirmDelete(item.id, item.name, context);
+    });
+  }
+
+  // ドラッグ
+  if (isEditMode) {
+    card.draggable = true;
+    card.addEventListener('dragstart', (e) => {
+      draggedId = item.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      draggedId = null;
+    });
+  }
+
   return card;
 }
 
-function setupDropZone(el, tierName = null) {
-  if (!el) return;
-  el.ondragover = (e) => e.preventDefault();
-  el.ondrop = (e) => {
-    e.preventDefault();
-    const targetTier = tierName || el.dataset.tier;
-    if (!draggedId) return;
+/* ── クエストカード生成 ── */
+function createQuestCard(quest) {
+  const card = document.createElement('div');
+  card.className = 'quest-card';
 
-    if (currentQuestId) {
-      const q = allData.find(d => d.id === currentQuestId);
-      const c = q.suitableChars.find(x => x.id === draggedId);
-      if (c) c.tier = targetTier;
+  card.innerHTML = `
+    <div class="quest-card-actions">
+      <button class="card-action-btn edit" title="編集"><i class="fas fa-edit"></i></button>
+      <button class="card-action-btn delete" title="削除"><i class="fas fa-trash"></i></button>
+    </div>
+    ${quest.image_url
+      ? `<img src="${escHtml(quest.image_url)}" class="quest-card-img" alt="${escHtml(quest.name)}">`
+      : `<div class="quest-card-img-placeholder"><i class="fas fa-skull-crossbones"></i></div>`}
+    <div class="quest-card-body">
+      <span class="quest-card-category">${escHtml(quest.category || '')}</span>
+      <div class="quest-card-name">${escHtml(quest.name)}</div>
+      <div class="quest-card-desc">${escHtml(quest.description || '')}</div>
+    </div>
+  `;
+
+  // カードクリック → 適正キャラティア表へ
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.card-action-btn')) return;
+    if (isEditMode) {
+      openEditModal('quest', quest);
     } else {
-      const i = allData.find(x => x.id === draggedId);
-      if (i) i.tier = targetTier;
+      currentQuestId = quest.id;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.nav-btn[data-view="tier"]').classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-tier').classList.add('active');
+      render();
     }
-    saveAndRefresh();
-  };
+  });
+
+  card.querySelector('.card-action-btn.edit').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openEditModal('quest', quest);
+  });
+  card.querySelector('.card-action-btn.delete').addEventListener('click', (e) => {
+    e.stopPropagation();
+    confirmDelete(quest.id, quest.name, 'quest');
+  });
+
+  return card;
 }
 
-function handleSave() {
-  const id = document.getElementById('p-id').value;
+/* ==========================================================
+   ドロップゾーン
+   ========================================================== */
+function setupDropZone(el, tierName = null, context = 'character') {
+  if (!el) return;
+  el.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (!draggedId) return;
+
+    const newTier = tierName || el.dataset.tier;
+
+    if (currentQuestId) {
+      const q = quests.find(q => q.id === currentQuestId);
+      if (q) {
+        const c = (q.suitableChars || []).find(x => x.id === draggedId);
+        if (c && c.tier !== newTier) {
+          c.tier = newTier;
+          await saveQuests();
+          showToast(`ティアを「${newTier}」に変更しました`, 'success');
+          render();
+        }
+      }
+    } else {
+      const char = characters.find(x => x.id === draggedId);
+      if (char && char.tier !== newTier) {
+        char.tier = newTier;
+        await saveCharacters();
+        showToast(`ティアを「${newTier}」に変更しました`, 'success');
+        render();
+      }
+    }
+  });
+}
+
+/* ==========================================================
+   保存処理
+   ========================================================== */
+async function handleSave() {
+  const id   = document.getElementById('p-id').value.trim();
   const type = document.getElementById('p-type').value;
+  const name = document.getElementById('p-name').value.trim();
+
+  if (!name) {
+    showToast('名前は必須です', 'error');
+    return;
+  }
 
   const newData = {
-    id: id || Date.now().toString(),
-    type: type,
-    name: document.getElementById('p-name').value,
-    tier: document.getElementById('p-tier').value,
-    category: document.getElementById('p-category').value,
-    image_url: document.getElementById('p-image-url').value,
-    typeDetail: document.getElementById('p-type-detail').value,
-    abi: document.getElementById('p-abi').value,
-    gauge: document.getElementById('p-gauge').value,
-    ss: document.getElementById('p-ss').value,
-    mainFriend: document.getElementById('p-main-friend').value,
-    subFriend: document.getElementById('p-sub-friend').value,
-    luck: document.getElementById('p-luck').value,
-    description: document.getElementById('p-description').value
+    id:          id || generateId(),
+    name,
+    tier:        document.getElementById('p-tier').value,
+    category:    document.getElementById('p-category').value,
+    image_url:   document.getElementById('p-image-url').value.trim(),
+    form:        selectedForm,
+    typeDetail:  document.getElementById('p-type-detail').value.trim(),
+    luck:        document.getElementById('p-luck').value.trim(),
+    abi:         document.getElementById('p-abi').value.trim(),
+    gauge:       document.getElementById('p-gauge').value.trim(),
+    ss:          document.getElementById('p-ss').value.trim(),
+    mainFriend:  document.getElementById('p-main-friend').value.trim(),
+    subFriend:   document.getElementById('p-sub-friend').value.trim(),
+    connect:     document.getElementById('p-connect').value.trim(),
+    shotSkill:   document.getElementById('p-shot-skill').value.trim(),
+    assistSkill: document.getElementById('p-assist-skill').value.trim(),
+    description: document.getElementById('p-description').value.trim()
   };
 
   if (currentQuestId && type === 'character') {
-    const q = allData.find(d => d.id === currentQuestId);
-    if (!q.suitableChars) q.suitableChars = [];
-    if (id) {
+    // 適正キャラの追加・編集
+    const q = quests.find(q => q.id === currentQuestId);
+    if (q) {
+      if (!q.suitableChars) q.suitableChars = [];
       const idx = q.suitableChars.findIndex(c => c.id === id);
-      q.suitableChars[idx] = newData;
-    } else q.suitableChars.push(newData);
-  } else {
-    if (id) {
-      const idx = allData.findIndex(d => d.id === id);
-      if (type === 'quest') newData.suitableChars = allData[idx].suitableChars || [];
-      allData[idx] = newData;
-    } else {
-      if (type === 'quest') newData.suitableChars = [];
-      allData.push(newData);
+      if (idx !== -1) q.suitableChars[idx] = newData;
+      else            q.suitableChars.push(newData);
+      await saveQuests();
+      showToast('適正キャラを保存しました', 'success');
     }
-  }
-  saveAndRefresh();
-  closeEditModal();
-}
-
-function showDetail(item) {
-  const content = document.getElementById('detail-content');
-  const imgHtml = item.image_url ? `<div class="detail-img-container"><img src="${item.image_url}"></div>` : '';
-  if (item.type === 'quest') {
-    content.innerHTML = `<div class="modal-header"><h2 class="modal-title">${item.name}</h2><button class="modal-close" onclick="closeDetail()"><i class="fas fa-times"></i></button></div><div class="modal-body">${imgHtml}<p style="white-space:pre-wrap;">${item.description || '詳細なし'}</p></div>`;
+  } else if (type === 'quest') {
+    // クエストの追加・編集
+    const idx = quests.findIndex(q => q.id === id);
+    if (idx !== -1) {
+      newData.suitableChars = quests[idx].suitableChars || [];
+      quests[idx] = newData;
+    } else {
+      newData.suitableChars = [];
+      quests.push(newData);
+    }
+    await saveQuests();
+    showToast('クエストを保存しました', 'success');
   } else {
-    content.innerHTML = `<div class="modal-header"><h2 class="modal-title">${item.name}</h2><button class="modal-close" onclick="closeDetail()"><i class="fas fa-times"></i></button></div><div class="modal-body">${imgHtml}<div class="status-container">${renderRow('タイプ', item.typeDetail)}${renderRow('アビ', item.abi, true)}${renderRow('ゲージ', item.gauge, true)}${renderRow('SS', item.ss)}${renderRow('友情', item.mainFriend)}${renderRow('サブ', item.subFriend)}${renderRow('ラック', item.luck)}</div></div>`;
+    // キャラの追加・編集
+    const idx = characters.findIndex(c => c.id === id);
+    if (idx !== -1) characters[idx] = newData;
+    else            characters.push(newData);
+    await saveCharacters();
+    showToast('キャラを保存しました', 'success');
   }
-  document.getElementById('modal-detail').style.display = 'flex';
+
+  closeEditModal();
+  render();
 }
 
-function renderRow(l, v, b = false) { return v ? `<div class="status-row"><div class="status-label">${l}</div><div class="status-value ${b ? 'text-blue' : ''}">${v}</div></div>` : ''; }
-function openEditModal(t, i = null) {
-  document.getElementById('p-id').value = i ? i.id : '';
-  document.getElementById('p-type').value = i ? i.type : t;
-  document.getElementById('p-name').value = i ? i.name : '';
-  document.getElementById('p-tier').value = i ? i.tier : '未分類';
-  document.getElementById('p-image-url').value = i ? i.image_url : '';
-  document.getElementById('p-type-detail').value = i?.typeDetail || '';
-  document.getElementById('p-abi').value = i?.abi || '';
-  document.getElementById('p-gauge').value = i?.gauge || '';
-  document.getElementById('p-ss').value = i?.ss || '';
-  document.getElementById('p-main-friend').value = i?.mainFriend || '';
-  document.getElementById('p-sub-friend').value = i?.subFriend || '';
-  document.getElementById('p-luck').value = i?.luck || '';
-  document.getElementById('p-description').value = i?.description || '';
+/* ==========================================================
+   モーダル開閉
+   ========================================================== */
+function openEditModal(type, item = null) {
+  document.getElementById('modal-title').textContent =
+    item ? (type === 'character' ? 'キャラ編集' : 'クエスト編集')
+         : (type === 'character' ? 'キャラ追加' : 'クエスト追加');
+
+  document.getElementById('p-id').value          = item?.id          || '';
+  document.getElementById('p-type').value        = type;
+  document.getElementById('p-name').value        = item?.name        || '';
+  document.getElementById('p-tier').value        = item?.tier        || '未分類';
+  document.getElementById('p-image-url').value   = item?.image_url   || '';
+  document.getElementById('p-type-detail').value = item?.typeDetail  || '';
+  document.getElementById('p-luck').value        = item?.luck        || '';
+  document.getElementById('p-abi').value         = item?.abi         || '';
+  document.getElementById('p-gauge').value       = item?.gauge       || '';
+  document.getElementById('p-ss').value          = item?.ss          || '';
+  document.getElementById('p-main-friend').value = item?.mainFriend  || '';
+  document.getElementById('p-sub-friend').value  = item?.subFriend   || '';
+  document.getElementById('p-connect').value     = item?.connect     || '';
+  document.getElementById('p-shot-skill').value  = item?.shotSkill   || '';
+  document.getElementById('p-assist-skill').value= item?.assistSkill || '';
+  document.getElementById('p-description').value = item?.description || '';
+
+  // 属性セレクト
   const cat = document.getElementById('p-category');
-  cat.innerHTML = CATEGORIES[t].map(c => `<option value="${c}">${c}</option>`).join('');
-  if (i) cat.value = i.category;
-  document.getElementById('char-status-fields').style.display = t === 'character' ? 'block' : 'none';
-  document.getElementById('quest-desc-field').style.display = t === 'quest' ? 'block' : 'none';
-  document.getElementById('field-tier').style.display = t === 'character' ? 'block' : 'none';
-  document.getElementById('modal-product').style.display = 'flex';
+  cat.innerHTML = CATEGORIES[type].map(c =>
+    `<option value="${c}">${c}</option>`
+  ).join('');
+  if (item?.category) cat.value = item.category;
+
+  // 形態セレクター
+  selectedForm = item?.form || '';
+  document.querySelectorAll('.form-type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.form === selectedForm);
+  });
+
+  // フィールド表示切替
+  document.getElementById('char-status-fields').style.display = type === 'character' ? 'block' : 'none';
+  document.getElementById('quest-desc-field').style.display   = type === 'quest'     ? 'block' : 'none';
+  document.getElementById('field-tier').style.display         = type === 'character' ? 'block' : 'none';
+  updateFormFields();
+
+  document.getElementById('modal-product').classList.add('is-open');
 }
-function saveAndRefresh() { localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); render(); }
-function closeEditModal() { document.getElementById('modal-product').style.display = 'none'; }
-function closeDetail() { document.getElementById('modal-detail').style.display = 'none'; }
+
+function closeEditModal() {
+  document.getElementById('modal-product').classList.remove('is-open');
+}
+
+/* ==========================================================
+   詳細表示
+   ========================================================== */
+function showDetail(item) {
+  document.getElementById('detail-modal-title').textContent = item.name;
+  const formColor = FORM_COLORS[item.form] || '#888884';
+
+  const rows = [
+    ['タイプ',   item.typeDetail,  ''],
+    ['属性',     item.category,    ''],
+    ['アビ',     item.abi,         'highlight'],
+    ['ゲージ',   item.gauge,       'highlight'],
+    ['SS',       item.ss,          ''],
+    ['友情',     item.mainFriend,  ''],
+    ['サブ友情', item.subFriend,   ''],
+    ['ラック',   item.luck,        ''],
+    ['コネクト', item.connect,     'connect'],
+    ['ショットスキル', item.shotSkill,  'shot'],
+    ['アシストスキル', item.assistSkill,'assist'],
+  ].filter(([, v]) => v).map(([l, v, cls]) => `
+    <div class="monst-status-row">
+      <div class="monst-status-label">${l}</div>
+      <div class="monst-status-value ${cls}">${escHtml(v)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-content">
+      ${item.image_url
+        ? `<div class="detail-img-wrap"><img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}"></div>`
+        : ''}
+      <div style="padding:0 1.3rem 0.5rem;">
+        ${item.form
+          ? `<span class="monst-form-badge-lg" style="background:${formColor}">${escHtml(item.form)}</span>`
+          : ''}
+        <div class="detail-meta-row">
+          <div class="detail-tier-badge" style="background:${TIER_COLORS[item.tier] || '#888884'}">${escHtml(item.tier || '未')}</div>
+          <div class="detail-name">${escHtml(item.name)}</div>
+        </div>
+        ${rows ? `<div class="monst-status-table">${rows}</div>` : ''}
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-detail').classList.add('is-open');
+}
+
+function closeDetail() {
+  document.getElementById('modal-detail').classList.remove('is-open');
+}
+
+/* ==========================================================
+   削除
+   ========================================================== */
+function confirmDelete(id, name, context) {
+  pendingDeleteId   = id;
+  pendingDeleteType = context;
+  document.getElementById('confirm-message').textContent =
+    `「${name}」を削除しますか？この操作は元に戻せません。`;
+  document.getElementById('modal-confirm').classList.add('is-open');
+}
+
+function closeConfirmModal() {
+  pendingDeleteId   = null;
+  pendingDeleteType = null;
+  document.getElementById('modal-confirm').classList.remove('is-open');
+}
+
+async function handleConfirmDelete() {
+  if (!pendingDeleteId) return;
+
+  if (pendingDeleteType === 'quest') {
+    quests = quests.filter(q => q.id !== pendingDeleteId);
+    await saveQuests();
+  } else if (pendingDeleteType === 'suitableChar' && currentQuestId) {
+    const q = quests.find(q => q.id === currentQuestId);
+    if (q) {
+      q.suitableChars = (q.suitableChars || []).filter(c => c.id !== pendingDeleteId);
+      await saveQuests();
+    }
+  } else {
+    characters = characters.filter(c => c.id !== pendingDeleteId);
+    await saveCharacters();
+  }
+
+  closeConfirmModal();
+  showToast('削除しました', 'success');
+  render();
+}
+
+/* ==========================================================
+   ユーティリティ
+   ========================================================== */
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function showLoading(visible) {
+  ['tier-container', 'products-grid'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = visible
+      ? '<div style="padding:3rem;color:var(--ink-3);text-align:center;font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</div>'
+      : '';
+  });
+}
+
+let toastTimer = null;
+function showToast(message, type = '') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent    = message;
+  toast.className      = type ? `toast ${type}` : 'toast';
+  toast.style.display  = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}

@@ -1,0 +1,224 @@
+/* ============================================================
+   apex.css — APEX攻略専用スタイル
+   ============================================================ */
+
+/* ── ヘッダーロゴ ── */
+.header-logo .fa-crosshairs { color: #e74c3c; font-size: 0.9rem; }
+
+/* ── 検索 ── */
+.search-wrap { position: relative; display: flex; align-items: center; }
+.search-icon {
+  position: absolute; left: 9px;
+  color: var(--ink-3); font-size: 0.75rem; pointer-events: none;
+}
+.search-input {
+  padding: 5px 10px 5px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink); font-family: var(--font); font-size: 0.8rem;
+  width: 200px; transition: all var(--transition);
+}
+.search-input:focus { outline: none; border-color: var(--ink); width: 240px; }
+.search-input::placeholder { color: var(--ink-3); }
+
+/* ── ティアボード（style.cssのtier-boardと共通） ── */
+.tier-board {
+  display: flex; flex-direction: column; gap: 1px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; background: var(--border);
+}
+
+.tier-board .tier-row {
+  display: flex; align-items: stretch; min-height: 96px;
+  background: var(--bg-card);
+}
+
+.tier-board .tier-label {
+  width: 62px; min-width: 62px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.5rem; font-weight: 600;
+  color: #fff; flex-shrink: 0; letter-spacing: -0.03em;
+}
+
+.tier-board .tier-drop-zone {
+  flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start;
+  gap: 8px; padding: 10px 12px; min-height: 96px;
+  border-left: 1px solid var(--border);
+  transition: background var(--transition); position: relative;
+}
+.tier-board .tier-drop-zone.drag-over {
+  background: var(--accent-light);
+  outline: 1px dashed var(--border-dark); outline-offset: -6px;
+}
+.tier-board .tier-drop-zone.empty::after {
+  content: "ドラッグして移動";
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3); font-size: 0.72rem;
+  pointer-events: none; opacity: 0.5; letter-spacing: 0.03em;
+}
+
+/* ── APEXカード（共通） ── */
+.apex-card {
+  width: 94px; background: var(--bg);
+  border-radius: var(--radius-sm); overflow: hidden;
+  cursor: pointer; transition: all var(--transition);
+  border: 1px solid var(--border); position: relative; user-select: none;
+}
+.apex-card:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-md);
+  border-color: var(--border-dark);
+}
+.apex-card.dragging { opacity: 0.3; transform: scale(0.93); }
+
+.apex-card-img-wrap {
+  width: 100%; height: 60px; background: var(--bg-sub);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.apex-card-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.apex-card-img-placeholder { color: var(--ink-3); font-size: 1.3rem; }
+
+.apex-card-name {
+  padding: 5px 6px; font-size: 0.66rem; font-weight: 500; color: var(--ink-2);
+  line-height: 1.3; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+/* クラスバッジ */
+.apex-class-badge {
+  position: absolute; top: 2px; left: 2px;
+  font-size: 0.48rem; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px;
+  color: #fff; line-height: 1.4;
+}
+.class-スキャン        { background: #2563a8; }
+.class-スカーミッシャー { background: #c0392b; }
+.class-サポート        { background: #2e7d52; }
+.class-コントローラー  { background: #7b3fa0; }
+.class-アサルト        { background: #d4750a; }
+
+/* 武器カテゴリバッジ */
+.apex-weapon-badge {
+  position: absolute; top: 2px; left: 2px;
+  font-size: 0.45rem; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px;
+  color: #fff; line-height: 1.4;
+  background: var(--ink-2);
+}
+
+/* 削除ボタン */
+.apex-card .card-delete-btn {
+  display: none; position: absolute; top: 3px; right: 3px;
+  background: var(--danger); color: #fff; border: none; border-radius: 50%;
+  width: 17px; height: 17px; font-size: 0.58rem; cursor: pointer;
+  align-items: center; justify-content: center; z-index: 5;
+  transition: all var(--transition);
+}
+.apex-card .card-delete-btn:hover { background: var(--danger-hover); }
+body.edit-mode .apex-card .card-delete-btn { display: flex; }
+body.edit-mode .apex-card { cursor: grab; }
+body.edit-mode .apex-card:active { cursor: grabbing; }
+
+/* ── 未分類エリア ── */
+.tier-unassigned {
+  margin-top: 1.25rem;
+  border: 1px dashed var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+}
+.unassigned-title {
+  font-size: 0.72rem; font-weight: 600; color: var(--ink-3);
+  margin-bottom: 0.75rem; display: flex; align-items: center;
+  gap: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.unassigned-items {
+  min-height: 68px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+.unassigned-items.drag-over {
+  background: var(--accent-light);
+  outline: 1px dashed var(--border-dark); outline-offset: -4px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── パークセクション（フォーム内） ── */
+.apex-perk-section {
+  margin: 1rem 0 0.5rem;
+  padding: 1rem;
+  background: var(--bg-sub);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.apex-perk-section-title {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; font-weight: 600; color: var(--ink);
+  margin-bottom: 0.85rem;
+}
+.apex-lv-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 2px 9px; border-radius: 99px;
+  font-size: 0.72rem; font-weight: 700; color: #fff;
+}
+.apex-lv-badge.lv2 { background: #2563a8; }
+.apex-lv-badge.lv3 { background: #c0392b; }
+
+/* ── 詳細モーダル：パーク表示 ── */
+.apex-detail-class {
+  display: inline-flex; align-items: center; padding: 3px 12px;
+  border-radius: 99px; font-size: 0.75rem; font-weight: 700;
+  color: #fff; margin-bottom: 0.75rem;
+}
+
+.apex-perk-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.apex-perk-card {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+}
+.apex-perk-card-header {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.apex-perk-card-name {
+  font-size: 0.82rem; font-weight: 600; color: var(--ink);
+}
+.apex-perk-card-effect {
+  font-size: 0.76rem; color: var(--ink-2); line-height: 1.6;
+}
+
+.apex-detail-section-title {
+  font-size: 0.72rem; font-weight: 700; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.apex-note-box {
+  background: var(--bg-sub); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 0.85rem;
+  font-size: 0.82rem; color: var(--ink-2); line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ── カテゴリフィルター ── */
+.filter-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── レスポンシブ ── */
+@media (max-width: 768px) {
+  .apex-card { width: 78px; }
+  .apex-card-img-wrap { height: 52px; }
+  .tier-board .tier-label { width: 46px; min-width: 46px; font-size: 1.2rem; }
+  .apex-perk-cards { grid-template-columns: 1fr; }
+  .search-input { width: 150px; }
+  .search-input:focus { width: 180px; }
+}
+@media (max-width: 480px) {
+  .tier-board .tier-label { width: 40px; min-width: 40px; font-size: 1rem; }
+  .apex-card { width: 68px; }
+}

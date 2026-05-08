@@ -28,36 +28,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ==========================================================
    ストレージ
    ========================================================== */
-const BIN_ID  = '69dc5298856a682189292896';
-const API_KEY = '$2a$10$dsM39E4/AjtLgFPbVrJtXO3BneHVnIp3gyqTdgmT.cFyUBaG17qRS';
+const BIN_ID  = '69dc5fff856a682189295519';
+const API_KEY = '$2a$10$joap43smKkXaRUqJnyLmH.WXhlFfhDqp9syZ978elHejCGT8amtQC';
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 async function loadData() {
   try {
-    const res  = await fetch(API_URL + '/latest', {
-      headers: { 'X-Master-Key': API_KEY }
+    const res = await fetch(API_URL + '/latest', {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'X-Master-Key': API_KEY,
+        'X-Bin-Meta': 'false'
+      }
     });
     const json = await res.json();
-    allProducts = json.record?.products ?? getSampleData();
+    allProducts = json.products ?? [];
   } catch (e) {
     console.error('データ読込エラー', e);
-    allProducts = getSampleData();
+    allProducts = [];
   }
 }
 
 async function saveData() {
   try {
-    await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: 'PUT',
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
-        'X-Master-Key': API_KEY
+        'X-Master-Key': API_KEY,
+        'X-Bin-Versioning': 'false'
       },
       body: JSON.stringify({ products: allProducts })
     });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('保存エラー:', res.status, err);
+      showToast('保存失敗: ' + res.status, 'error');
+    }
   } catch (e) {
     console.error('データ保存エラー', e);
-    showToast('保存に失敗しました', 'error');
+    showToast('保存に失敗しました: ' + e.message, 'error');
   }
 }
 

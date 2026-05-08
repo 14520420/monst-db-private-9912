@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APEX 攻略・ティア表</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/apex.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<header class="site-header">
+  <div class="header-inner">
+
+    <div class="site-tabs">
+      <a href="index.html" class="site-tab">おすすめ商品</a>
+      <a href="monst.html" class="site-tab">モンスト攻略</a>
+      <a href="apex.html"  class="site-tab active">APEX攻略</a>
+    </div>
+
+    <div class="header-logo">
+      <i class="fas fa-crosshairs"></i>
+      <span class="logo-text">APEX DATABASE</span>
+    </div>
+
+    <nav class="header-nav">
+      <button class="nav-btn active" data-view="legends">
+        <i class="fas fa-user-astronaut"></i> レジェンド
+      </button>
+      <button class="nav-btn" data-view="weapons">
+        <i class="fas fa-gun"></i> 武器
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="search-wrap">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="search-input" class="search-input" placeholder="検索...">
+      </div>
+      <button id="btn-edit-mode" class="btn-toggle-edit" title="編集モード切替">
+        <i class="fas fa-edit"></i> 編集
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== メインコンテンツ ===== -->
+<main class="main-content">
+
+  <!-- レジェンドティア表ビュー -->
+  <section id="view-legends" class="view active">
+    <div class="view-header">
+      <h1 class="view-title">
+        <i class="fas fa-user-astronaut"></i> レジェンド ティア表
+      </h1>
+      <div class="view-actions" id="legend-edit-actions" style="display:none;">
+        <button id="btn-add-legend" class="btn-primary">
+          <i class="fas fa-plus"></i> レジェンド追加
+        </button>
+      </div>
+    </div>
+
+    <div id="legend-tier-container" class="tier-board"></div>
+
+    <div id="legend-unclassified" class="tier-unassigned" style="display:none;">
+      <h3 class="unassigned-title"><i class="fas fa-inbox"></i> 未分類</h3>
+      <div id="legend-tier-pool" class="unassigned-items"></div>
+    </div>
+  </section>
+
+  <!-- 武器ティア表ビュー -->
+  <section id="view-weapons" class="view">
+    <div class="view-header">
+      <h1 class="view-title">
+        <i class="fas fa-gun"></i> 武器 ティア表
+      </h1>
+      <div class="view-actions">
+        <div class="filter-chips" id="weapon-category-filters">
+          <button class="chip active" data-category="all">すべて</button>
+          <button class="chip" data-category="アサルトライフル">AR</button>
+          <button class="chip" data-category="サブマシンガン">SMG</button>
+          <button class="chip" data-category="軽機関銃">LMG</button>
+          <button class="chip" data-category="スナイパー">スナイパー</button>
+          <button class="chip" data-category="ショットガン">SG</button>
+          <button class="chip" data-category="ピストル">ピストル</button>
+          <button class="chip" data-category="マークスマン">マークスマン</button>
+        </div>
+        <div id="weapon-edit-actions" style="display:none;">
+          <button id="btn-add-weapon" class="btn-primary">
+            <i class="fas fa-plus"></i> 武器追加
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="weapon-tier-container" class="tier-board"></div>
+
+    <div id="weapon-unclassified" class="tier-unassigned" style="display:none;">
+      <h3 class="unassigned-title"><i class="fas fa-inbox"></i> 未分類</h3>
+      <div id="weapon-tier-pool" class="unassigned-items"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== モーダル：レジェンド追加・編集 ===== -->
+<div id="modal-legend" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-legend-title" class="modal-title">レジェンド追加</h2>
+      <button class="modal-close" id="btn-legend-modal-close"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="form-legend" class="modal-form">
+      <input type="hidden" id="legend-id">
+
+      <div class="form-row">
+        <label class="form-label">名前 <span class="required">*</span></label>
+        <input type="text" id="legend-name" class="form-input" required placeholder="例：バンガロール">
+      </div>
+
+      <div class="form-row-2col">
+        <div class="form-row">
+          <label class="form-label">ティア</label>
+          <select id="legend-tier" class="form-input">
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="未分類">未分類</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">クラス</label>
+          <select id="legend-class" class="form-input">
+            <option value="スキャン">スキャン</option>
+            <option value="スカーミッシャー">スカーミッシャー</option>
+            <option value="サポート">サポート</option>
+            <option value="コントローラー">コントローラー</option>
+            <option value="アサルト">アサルト</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">画像URL</label>
+        <input type="url" id="legend-image" class="form-input" placeholder="https://...">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">説明</label>
+        <textarea id="legend-description" class="form-textarea" rows="2" placeholder="キャラの説明"></textarea>
+      </div>
+
+      <!-- LV2パーク -->
+      <div class="apex-perk-section">
+        <div class="apex-perk-section-title">
+          <span class="apex-lv-badge lv2">LV2</span> パーク
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV2 パーク①　名前</label>
+          <input type="text" id="perk-lv2-1-name" class="form-input" placeholder="パーク名">
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV2 パーク①　効果</label>
+          <textarea id="perk-lv2-1-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV2 パーク②　名前</label>
+          <input type="text" id="perk-lv2-2-name" class="form-input" placeholder="パーク名">
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV2 パーク②　効果</label>
+          <textarea id="perk-lv2-2-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
+        </div>
+      </div>
+
+      <!-- LV3パーク -->
+      <div class="apex-perk-section">
+        <div class="apex-perk-section-title">
+          <span class="apex-lv-badge lv3">LV3</span> パーク
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV3 パーク①　名前</label>
+          <input type="text" id="perk-lv3-1-name" class="form-input" placeholder="パーク名">
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV3 パーク①　効果</label>
+          <textarea id="perk-lv3-1-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV3 パーク②　名前</label>
+          <input type="text" id="perk-lv3-2-name" class="form-input" placeholder="パーク名">
+        </div>
+        <div class="form-row">
+          <label class="form-label">LV3 パーク②　効果</label>
+          <textarea id="perk-lv3-2-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">補足</label>
+        <textarea id="legend-note" class="form-textarea" rows="3" placeholder="自由にメモできます"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-legend-cancel">キャンセル</button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i> 保存する
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== モーダル：武器追加・編集 ===== -->
+<div id="modal-weapon" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-weapon-title" class="modal-title">武器追加</h2>
+      <button class="modal-close" id="btn-weapon-modal-close"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="form-weapon" class="modal-form">
+      <input type="hidden" id="weapon-id">
+
+      <div class="form-row">
+        <label class="form-label">名前 <span class="required">*</span></label>
+        <input type="text" id="weapon-name" class="form-input" required placeholder="例：R-301">
+      </div>
+
+      <div class="form-row-2col">
+        <div class="form-row">
+          <label class="form-label">ティア</label>
+          <select id="weapon-tier" class="form-input">
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="未分類">未分類</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">カテゴリ</label>
+          <select id="weapon-category" class="form-input">
+            <option value="アサルトライフル">アサルトライフル</option>
+            <option value="サブマシンガン">サブマシンガン</option>
+            <option value="軽機関銃">軽機関銃</option>
+            <option value="スナイパー">スナイパー</option>
+            <option value="ショットガン">ショットガン</option>
+            <option value="ピストル">ピストル</option>
+            <option value="マークスマン">マークスマン</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">画像URL</label>
+        <input type="url" id="weapon-image" class="form-input" placeholder="https://...">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">補足</label>
+        <textarea id="weapon-note" class="form-textarea" rows="3" placeholder="自由にメモできます"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-weapon-cancel">キャンセル</button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i> 保存する
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 詳細モーダル ===== -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-box modal-detail-box">
+    <div class="modal-header">
+      <h2 id="detail-title" class="modal-title">詳細</h2>
+      <button class="modal-close" id="btn-detail-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="detail-content" class="detail-content"></div>
+  </div>
+</div>
+
+<!-- ===== 削除確認 ===== -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box modal-confirm-box">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-exclamation-triangle" style="color:#d63636;"></i> 削除確認
+      </h2>
+    </div>
+    <p id="confirm-message" class="confirm-message">削除しますか？</p>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-confirm-cancel">キャンセル</button>
+      <button class="btn-danger" id="btn-confirm-ok">
+        <i class="fas fa-trash"></i> 削除する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== トースト ===== -->
+<div id="toast" class="toast"></div>
+
+<script src="js/apex.js"></script>
+</body>
+</html>
