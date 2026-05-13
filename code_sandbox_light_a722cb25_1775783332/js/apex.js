@@ -349,6 +349,8 @@ function createApexCard(item, type) {
     </div>
     ${badgeHtml}
     <div class="apex-card-name">${escHtml(item.name)}</div>
+    ${type === 'weapon' && item.carePackage
+      ? `<span class="apex-carepackage-badge">CARE</span>` : ''}
     ${isEditMode
       ? `<button class="card-delete-btn" title="削除"><i class="fas fa-times"></i></button>`
       : ''}

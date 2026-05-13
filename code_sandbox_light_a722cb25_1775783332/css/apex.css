@@ -222,3 +222,209 @@ body.edit-mode .apex-card:active { cursor: grabbing; }
   .tier-board .tier-label { width: 40px; min-width: 40px; font-size: 1rem; }
   .apex-card { width: 68px; }
 }
+
+/* ============================================================
+   おすすめパーク・ケアパケ チェック時の枠表示
+   ============================================================ */
+
+/* ── おすすめパーク チェックボックスUI ── */
+.apex-perk-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.apex-perk-name-wrap .form-input {
+  flex: 1;
+}
+.apex-recommend-check {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.apex-recommend-check input[type="checkbox"] {
+  display: none;
+}
+.apex-recommend-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dark);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  background: transparent;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+.apex-recommend-label i {
+  font-size: 0.65rem;
+}
+/* チェックON時 */
+.apex-recommend-check input[type="checkbox"]:checked + .apex-recommend-label {
+  background: rgba(255,177,0,0.12);
+  border-color: #e8a800;
+  color: #c48a00;
+  box-shadow: 0 0 0 2px rgba(232,168,0,0.25);
+}
+
+/* ── おすすめパークカード（詳細モーダル内）── */
+.apex-perk-card {
+  transition: all 0.2s ease;
+}
+
+/* おすすめ枠：金色のグロウ枠 */
+.apex-perk-card.perk-recommended {
+  border: 2px solid #e8a800;
+  box-shadow: 0 0 0 3px rgba(232,168,0,0.18), 0 2px 12px rgba(232,168,0,0.15);
+  background: rgba(255,177,0,0.06);
+  position: relative;
+}
+
+/* おすすめバッジ */
+.apex-perk-recommend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #e8a800, #f5c518);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  margin-left: auto;
+  box-shadow: 0 1px 4px rgba(232,168,0,0.4);
+  animation: perkBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes perkBadgePulse {
+  0%, 100% { box-shadow: 0 1px 4px rgba(232,168,0,0.4); }
+  50%       { box-shadow: 0 1px 10px rgba(232,168,0,0.75), 0 0 0 3px rgba(232,168,0,0.15); }
+}
+
+/* ── ケアパケ チェックボックスUI ── */
+.apex-carepackage-check {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.apex-carepackage-check input[type="checkbox"] {
+  display: none;
+}
+.apex-carepackage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dark);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  background: transparent;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+/* チェックON時：赤枠 */
+.apex-carepackage-check input[type="checkbox"]:checked + .apex-carepackage-label {
+  background: rgba(214,54,54,0.08);
+  border-color: #d63636;
+  color: #d63636;
+  box-shadow: 0 0 0 2px rgba(214,54,54,0.2);
+  font-weight: 700;
+}
+
+/* ── ケアパケカード（ティア表内）赤枠 ── */
+.apex-card.care-package {
+  border: 2px solid #d63636;
+  box-shadow: 0 0 0 2px rgba(214,54,54,0.2), 0 2px 8px rgba(214,54,54,0.18);
+}
+.apex-card.care-package:hover {
+  box-shadow: 0 0 0 3px rgba(214,54,54,0.3), var(--shadow-md);
+}
+
+/* ケアパケバッジ（カード右下） */
+.apex-carepackage-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: #d63636;
+  color: #fff;
+  font-size: 0.44rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+/* ── アビリティセクション（フォーム内） ── */
+.apex-ability-section {
+  margin: 1rem 0 0.5rem;
+  padding: 1rem;
+  background: var(--bg-sub);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.apex-ability-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.85rem;
+}
+.apex-ability-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700 !important;
+}
+.apex-ability-label.passive  { color: #2563a8 !important; }
+.apex-ability-label.tactical { color: #2e7d52 !important; }
+.apex-ability-label.ultimate { color: #c0392b !important; }
+
+/* ── アビリティカード（詳細モーダル内） ── */
+.apex-ability-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+.apex-ability-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.apex-ability-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+}
+.apex-ability-card-header.passive  { background: #2563a8; }
+.apex-ability-card-header.tactical { background: #2e7d52; }
+.apex-ability-card-header.ultimate { background: #c0392b; }
+.apex-ability-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0.85;
+  background: rgba(255,255,255,0.2);
+  padding: 1px 6px;
+  border-radius: 99px;
+}
+.apex-ability-name {
+  flex: 1;
+}
+.apex-ability-desc {
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  line-height: 1.65;
+  background: var(--bg-sub);
+}
