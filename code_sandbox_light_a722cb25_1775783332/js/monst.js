@@ -37,7 +37,7 @@ const FORM_COLORS = {
 
 const CATEGORIES = {
   character: ['火属性', '水属性', '木属性', '光属性', '闇属性'],
-  quest:     ['黎絶', '轟絶', '爆絶', '超絶', '超究極', '天魔(試練)', '天魔(空中庭園)', '禁忌','星墓']
+  quest:     ['黎絶', '轟絶', '爆絶', '超絶', '超究極', '天魔(試練)', '天魔(空中庭園)', '禁忌']
 };
 
 // ===== 状態管理 =====
@@ -234,7 +234,8 @@ function updateFormFields() {
   const shotField    = document.getElementById('field-shot-skill');
   const assistField  = document.getElementById('field-assist-skill');
 
-  connectField.style.display = selectedForm === '獣神化・改' ? 'block' : 'none';
+  connectField.style.display     = selectedForm === '獣神化・改' ? 'block' : 'none';
+  document.getElementById('field-connect-cond').style.display = selectedForm === '獣神化・改' ? 'block' : 'none';
   shotField.style.display    = selectedForm === '真獣神化'   ? 'block' : 'none';
   assistField.style.display  = selectedForm === '真獣神化'   ? 'block' : 'none';
 }
@@ -298,6 +299,8 @@ function render() {
 
 /* ── ティア表描画 ── */
 function renderTierBoard(container, pool, dataList, context) {
+  container.classList.remove('tier-board-loaded');
+
   TIER_ORDER.forEach(tier => {
     const items = dataList.filter(d => d.tier === tier);
     const row   = document.createElement('div');
@@ -317,6 +320,11 @@ function renderTierBoard(container, pool, dataList, context) {
     row.appendChild(label);
     row.appendChild(zone);
     container.appendChild(row);
+  });
+
+  // ローディング演出
+  requestAnimationFrame(() => {
+    container.classList.add('tier-board-loaded');
   });
 
   // 未分類
@@ -511,6 +519,7 @@ async function handleSave() {
     mainFriend:  document.getElementById('p-main-friend').value.trim(),
     subFriend:   document.getElementById('p-sub-friend').value.trim(),
     connect:     document.getElementById('p-connect').value.trim(),
+    connectCond: document.getElementById('p-connect-cond').value.trim(),
     shotSkill:   document.getElementById('p-shot-skill').value.trim(),
     assistSkill: document.getElementById('p-assist-skill').value.trim(),
     description: document.getElementById('p-description').value.trim()
@@ -573,6 +582,7 @@ function openEditModal(type, item = null) {
   document.getElementById('p-main-friend').value = item?.mainFriend  || '';
   document.getElementById('p-sub-friend').value  = item?.subFriend   || '';
   document.getElementById('p-connect').value     = item?.connect     || '';
+  document.getElementById('p-connect-cond').value= item?.connectCond || '';
   document.getElementById('p-shot-skill').value  = item?.shotSkill   || '';
   document.getElementById('p-assist-skill').value= item?.assistSkill || '';
   document.getElementById('p-description').value = item?.description || '';
@@ -619,7 +629,8 @@ function showDetail(item) {
     ['友情',     item.mainFriend,  ''],
     ['サブ友情', item.subFriend,   ''],
     ['ラック',   item.luck,        ''],
-    ['コネクト', item.connect,     'connect'],
+    ['コネクト',   item.connect,     'connect'],
+    ['コネクト条件',item.connectCond,'connect'],
     ['ショットスキル', item.shotSkill,  'shot'],
     ['アシストスキル', item.assistSkill,'assist'],
   ].filter(([, v]) => v).map(([l, v, cls]) => `

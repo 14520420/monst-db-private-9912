@@ -20,6 +20,7 @@
     <div class="site-tabs">
       <a href="index.html" class="site-tab">おすすめ商品</a>
       <a href="monst.html" class="site-tab active">モンスト攻略</a>
+      <a href="apex.html"  class="site-tab">APEX攻略</a>
     </div>
 
     <div class="header-logo">
@@ -90,7 +91,6 @@
           <button class="chip" data-category="天魔(試練)">天魔(試練)</button>
           <button class="chip" data-category="天魔(空中庭園)">天魔(空中庭園)</button>
           <button class="chip" data-category="禁忌">禁忌</button>
-          <button class="chip" data-category="星墓">星墓</button>
         </div>
         <div id="quest-edit-actions" style="display:none;">
           <button id="btn-add-quest" class="btn-primary">
@@ -193,10 +193,14 @@
           <input type="text" id="p-sub-friend" class="form-input">
         </div>
 
-        <!-- 獣神化・改専用：コネクト -->
+        <!-- 獣神化・改専用：コネクト・コネクト条件 -->
         <div id="field-connect" class="form-row" style="display:none;">
           <label class="form-label monst-label-connect">コネクト</label>
           <input type="text" id="p-connect" class="form-input" placeholder="コネクト効果を入力">
+        </div>
+        <div id="field-connect-cond" class="form-row" style="display:none;">
+          <label class="form-label monst-label-connect">コネクト条件</label>
+          <input type="text" id="p-connect-cond" class="form-input" placeholder="コネクト条件を入力">
         </div>
 
         <!-- 真獣神化専用：ショットスキル・アシストスキル -->
@@ -262,5 +266,6 @@
 <div id="toast" class="toast"></div>
 
 <script src="js/monst.js"></script>
+<script src="js/settings.js"></script>
 </body>
 </html>

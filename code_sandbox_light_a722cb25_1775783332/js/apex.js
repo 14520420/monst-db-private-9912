@@ -26,14 +26,14 @@ const TIER_COLORS = {
   C: '#2e7d52', D: '#2563a8', '未分類': '#888884'
 };
 const CLASS_COLORS = {
-  'スキャン':        '#2563a8',
+  'リコン':          '#2563a8',
   'スカーミッシャー': '#c0392b',
   'サポート':        '#2e7d52',
   'コントローラー':  '#7b3fa0',
   'アサルト':        '#d4750a'
 };
 const CLASS_SHORT = {
-  'スキャン':        'スキャン',
+  'リコン':          'リコン',
   'スカーミッシャー': 'スカーミ',
   'サポート':        'サポート',
   'コントローラー':  'コント',
@@ -222,6 +222,7 @@ function renderLegends() {
   const pool      = document.getElementById('legend-tier-pool');
   container.innerHTML = '';
   pool.innerHTML      = '';
+  container.classList.remove('tier-board-loaded');
 
   let filtered = legends;
   if (searchTerm) {
@@ -250,6 +251,10 @@ function renderLegends() {
     container.appendChild(row);
   });
 
+  requestAnimationFrame(() => {
+    container.classList.add('tier-board-loaded');
+  });
+
   const unassigned = filtered.filter(l => !TIER_ORDER.includes(l.tier));
   unassigned.forEach(l => pool.appendChild(createApexCard(l, 'legend')));
   pool.dataset.tier  = '未分類';
@@ -265,6 +270,7 @@ function renderWeapons() {
   const pool      = document.getElementById('weapon-tier-pool');
   container.innerHTML = '';
   pool.innerHTML      = '';
+  container.classList.remove('tier-board-loaded');
 
   let filtered = weapons;
   if (activeWeaponCat !== 'all') {
@@ -296,6 +302,10 @@ function renderWeapons() {
     container.appendChild(row);
   });
 
+  requestAnimationFrame(() => {
+    container.classList.add('tier-board-loaded');
+  });
+
   const unassigned = filtered.filter(w => !TIER_ORDER.includes(w.tier));
   unassigned.forEach(w => pool.appendChild(createApexCard(w, 'weapon')));
   pool.dataset.tier  = '未分類';
@@ -309,6 +319,9 @@ function renderWeapons() {
 function createApexCard(item, type) {
   const card = document.createElement('div');
   card.className = 'apex-card';
+  if (type === 'weapon' && item.carePackage) {
+    card.classList.add('care-package');
+  }
   card.dataset.id = item.id;
 
   let badgeHtml = '';
@@ -426,18 +439,31 @@ function openLegendModal(item = null) {
   document.getElementById('legend-tier').value        = item?.tier        || '未分類';
   document.getElementById('legend-class').value       = item?.legendClass || 'スカーミッシャー';
   document.getElementById('legend-image').value       = item?.image_url   || '';
-  document.getElementById('legend-description').value = item?.description || '';
   document.getElementById('legend-note').value        = item?.note        || '';
 
+  // アビリティ
+  const ab = item?.abilities || {};
+  document.getElementById('legend-passive-name').value   = ab.passive?.name  || '';
+  document.getElementById('legend-passive-desc').value   = ab.passive?.desc  || '';
+  document.getElementById('legend-tactical-name').value  = ab.tactical?.name || '';
+  document.getElementById('legend-tactical-desc').value  = ab.tactical?.desc || '';
+  document.getElementById('legend-ultimate-name').value  = ab.ultimate?.name || '';
+  document.getElementById('legend-ultimate-desc').value  = ab.ultimate?.desc || '';
+
+  // パーク
   const p = item?.perks || {};
-  document.getElementById('perk-lv2-1-name').value   = p.lv2_1?.name   || '';
-  document.getElementById('perk-lv2-1-effect').value = p.lv2_1?.effect || '';
-  document.getElementById('perk-lv2-2-name').value   = p.lv2_2?.name   || '';
-  document.getElementById('perk-lv2-2-effect').value = p.lv2_2?.effect || '';
-  document.getElementById('perk-lv3-1-name').value   = p.lv3_1?.name   || '';
-  document.getElementById('perk-lv3-1-effect').value = p.lv3_1?.effect || '';
-  document.getElementById('perk-lv3-2-name').value   = p.lv3_2?.name   || '';
-  document.getElementById('perk-lv3-2-effect').value = p.lv3_2?.effect || '';
+  document.getElementById('perk-lv2-1-name').value   = p.lv2_1?.name      || '';
+  document.getElementById('perk-lv2-1-effect').value = p.lv2_1?.effect    || '';
+  document.getElementById('perk-lv2-1-rec').checked  = p.lv2_1?.recommend || false;
+  document.getElementById('perk-lv2-2-name').value   = p.lv2_2?.name      || '';
+  document.getElementById('perk-lv2-2-effect').value = p.lv2_2?.effect    || '';
+  document.getElementById('perk-lv2-2-rec').checked  = p.lv2_2?.recommend || false;
+  document.getElementById('perk-lv3-1-name').value   = p.lv3_1?.name      || '';
+  document.getElementById('perk-lv3-1-effect').value = p.lv3_1?.effect    || '';
+  document.getElementById('perk-lv3-1-rec').checked  = p.lv3_1?.recommend || false;
+  document.getElementById('perk-lv3-2-name').value   = p.lv3_2?.name      || '';
+  document.getElementById('perk-lv3-2-effect').value = p.lv3_2?.effect    || '';
+  document.getElementById('perk-lv3-2-rec').checked  = p.lv3_2?.recommend || false;
 
   document.getElementById('modal-legend').classList.add('is-open');
 }
@@ -457,24 +483,41 @@ async function handleSaveLegend() {
     tier:        document.getElementById('legend-tier').value,
     legendClass: document.getElementById('legend-class').value,
     image_url:   document.getElementById('legend-image').value.trim(),
-    description: document.getElementById('legend-description').value.trim(),
     note:        document.getElementById('legend-note').value.trim(),
+    abilities: {
+      passive:  {
+        name: document.getElementById('legend-passive-name').value.trim(),
+        desc: document.getElementById('legend-passive-desc').value.trim()
+      },
+      tactical: {
+        name: document.getElementById('legend-tactical-name').value.trim(),
+        desc: document.getElementById('legend-tactical-desc').value.trim()
+      },
+      ultimate: {
+        name: document.getElementById('legend-ultimate-name').value.trim(),
+        desc: document.getElementById('legend-ultimate-desc').value.trim()
+      }
+    },
     perks: {
       lv2_1: {
-        name:   document.getElementById('perk-lv2-1-name').value.trim(),
-        effect: document.getElementById('perk-lv2-1-effect').value.trim()
+        name:      document.getElementById('perk-lv2-1-name').value.trim(),
+        effect:    document.getElementById('perk-lv2-1-effect').value.trim(),
+        recommend: document.getElementById('perk-lv2-1-rec').checked
       },
       lv2_2: {
-        name:   document.getElementById('perk-lv2-2-name').value.trim(),
-        effect: document.getElementById('perk-lv2-2-effect').value.trim()
+        name:      document.getElementById('perk-lv2-2-name').value.trim(),
+        effect:    document.getElementById('perk-lv2-2-effect').value.trim(),
+        recommend: document.getElementById('perk-lv2-2-rec').checked
       },
       lv3_1: {
-        name:   document.getElementById('perk-lv3-1-name').value.trim(),
-        effect: document.getElementById('perk-lv3-1-effect').value.trim()
+        name:      document.getElementById('perk-lv3-1-name').value.trim(),
+        effect:    document.getElementById('perk-lv3-1-effect').value.trim(),
+        recommend: document.getElementById('perk-lv3-1-rec').checked
       },
       lv3_2: {
-        name:   document.getElementById('perk-lv3-2-name').value.trim(),
-        effect: document.getElementById('perk-lv3-2-effect').value.trim()
+        name:      document.getElementById('perk-lv3-2-name').value.trim(),
+        effect:    document.getElementById('perk-lv3-2-effect').value.trim(),
+        recommend: document.getElementById('perk-lv3-2-rec').checked
       }
     }
   };
@@ -494,12 +537,13 @@ async function handleSaveLegend() {
    ========================================================== */
 function openWeaponModal(item = null) {
   document.getElementById('modal-weapon-title').textContent = item ? '武器編集' : '武器追加';
-  document.getElementById('weapon-id').value       = item?.id       || '';
-  document.getElementById('weapon-name').value     = item?.name     || '';
-  document.getElementById('weapon-tier').value     = item?.tier     || '未分類';
-  document.getElementById('weapon-category').value = item?.category || 'アサルトライフル';
-  document.getElementById('weapon-image').value    = item?.image_url|| '';
-  document.getElementById('weapon-note').value     = item?.note     || '';
+  document.getElementById('weapon-id').value          = item?.id          || '';
+  document.getElementById('weapon-name').value        = item?.name        || '';
+  document.getElementById('weapon-tier').value        = item?.tier        || '未分類';
+  document.getElementById('weapon-category').value   = item?.category    || 'アサルトライフル';
+  document.getElementById('weapon-image').value      = item?.image_url   || '';
+  document.getElementById('weapon-note').value       = item?.note        || '';
+  document.getElementById('weapon-carepackage').checked = item?.carePackage || false;
   document.getElementById('modal-weapon').classList.add('is-open');
 }
 
@@ -513,12 +557,13 @@ async function handleSaveWeapon() {
   if (!name) { showToast('名前は必須です', 'error'); return; }
 
   const newData = {
-    id:       id || generateId(),
+    id:          id || generateId(),
     name,
-    tier:     document.getElementById('weapon-tier').value,
-    category: document.getElementById('weapon-category').value,
-    image_url:document.getElementById('weapon-image').value.trim(),
-    note:     document.getElementById('weapon-note').value.trim()
+    tier:        document.getElementById('weapon-tier').value,
+    category:    document.getElementById('weapon-category').value,
+    image_url:   document.getElementById('weapon-image').value.trim(),
+    note:        document.getElementById('weapon-note').value.trim(),
+    carePackage: document.getElementById('weapon-carepackage').checked
   };
 
   const idx = weapons.findIndex(w => w.id === id);
@@ -537,17 +582,35 @@ async function handleSaveWeapon() {
 function showLegendDetail(item) {
   document.getElementById('detail-title').textContent = item.name;
   const classColor = CLASS_COLORS[item.legendClass] || '#888';
-  const p = item.perks || {};
+  const p  = item.perks     || {};
+  const ab = item.abilities || {};
 
-  const perkHtml = (perk, lv, num) => {
+  // パークHTML（おすすめはアニメーション付き）
+  const perkHtml = (perk, lv) => {
     if (!perk?.name) return '';
+    const isRec = perk.recommend;
     return `
-      <div class="apex-perk-card">
+      <div class="apex-perk-card ${isRec ? 'perk-recommended' : ''}">
         <div class="apex-perk-card-header">
           <span class="apex-lv-badge ${lv}">${lv === 'lv2' ? 'LV2' : 'LV3'}</span>
           <span class="apex-perk-card-name">${escHtml(perk.name)}</span>
+          ${isRec ? `<span class="apex-perk-recommend-badge"><i class="fas fa-star"></i> おすすめ</span>` : ''}
         </div>
         <div class="apex-perk-card-effect">${escHtml(perk.effect || '')}</div>
+      </div>`;
+  };
+
+  // アビリティHTML
+  const abilityHtml = (ab, type, icon, label, colorClass) => {
+    if (!ab?.name) return '';
+    return `
+      <div class="apex-ability-card">
+        <div class="apex-ability-card-header ${colorClass}">
+          <i class="fas ${icon}"></i>
+          <span class="apex-ability-type">${label}</span>
+          <span class="apex-ability-name">${escHtml(ab.name)}</span>
+        </div>
+        ${ab.desc ? `<div class="apex-ability-desc">${escHtml(ab.desc)}</div>` : ''}
       </div>`;
   };
 
@@ -561,15 +624,23 @@ function showLegendDetail(item) {
         <div class="detail-tier-badge" style="background:${TIER_COLORS[item.tier] || '#888'}">${escHtml(item.tier || '未')}</div>
         <div class="detail-name">${escHtml(item.name)}</div>
       </div>
-      ${item.description ? `<p class="detail-desc">${escHtml(item.description)}</p>` : ''}
+
+      ${(ab.passive?.name || ab.tactical?.name || ab.ultimate?.name) ? `
+        <div class="apex-detail-section-title">アビリティ</div>
+        <div class="apex-ability-cards">
+          ${abilityHtml(ab.passive,  'passive',  'fa-shoe-prints', 'パッシブ',   'passive')}
+          ${abilityHtml(ab.tactical, 'tactical', 'fa-hand-paper',  'アビリティ', 'tactical')}
+          ${abilityHtml(ab.ultimate, 'ultimate', 'fa-bolt',        'ウルト',     'ultimate')}
+        </div>
+      ` : ''}
 
       ${(p.lv2_1?.name || p.lv2_2?.name || p.lv3_1?.name || p.lv3_2?.name) ? `
         <div class="apex-detail-section-title">パーク</div>
         <div class="apex-perk-cards">
-          ${perkHtml(p.lv2_1, 'lv2', 1)}
-          ${perkHtml(p.lv2_2, 'lv2', 2)}
-          ${perkHtml(p.lv3_1, 'lv3', 1)}
-          ${perkHtml(p.lv3_2, 'lv3', 2)}
+          ${perkHtml(p.lv2_1, 'lv2')}
+          ${perkHtml(p.lv2_2, 'lv2')}
+          ${perkHtml(p.lv3_1, 'lv3')}
+          ${perkHtml(p.lv3_2, 'lv3')}
         </div>
       ` : ''}
 

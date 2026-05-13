@@ -30,6 +30,70 @@
   --font-display: 'DM Sans','Noto Sans JP',sans-serif;
   --font:         'Noto Sans JP','DM Sans',sans-serif;
   --transition: 0.18s ease;
+
+  /* カードサイズ変数 */
+  --card-w:        94px;
+  --card-img-h:    60px;
+  --card-font:     0.66rem;
+}
+
+/* ── ダークモード ── */
+body.dark-mode {
+  --bg:           #111112;
+  --bg-card:      #1a1a1c;
+  --bg-sub:       #222226;
+  --border:       #2e2e32;
+  --border-dark:  #3e3e44;
+  --ink:          #f0f0ee;
+  --ink-2:        #aaaaaa;
+  --ink-3:        #666668;
+  --accent-light: rgba(240,240,238,0.06);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.55);
+}
+body.dark-mode .site-header {
+  background: rgba(17,17,18,0.88);
+}
+body.dark-mode .modal-overlay {
+  background: rgba(0,0,0,0.55);
+}
+
+/* ── カードサイズ：小 ── */
+body.card-sm {
+  --card-w:     72px;
+  --card-img-h: 46px;
+  --card-font:  0.58rem;
+}
+/* ── カードサイズ：中（デフォルト） ── */
+body.card-md {
+  --card-w:     94px;
+  --card-img-h: 60px;
+  --card-font:  0.66rem;
+}
+/* ── カードサイズ：大 ── */
+body.card-lg {
+  --card-w:     120px;
+  --card-img-h: 80px;
+  --card-font:  0.74rem;
+}
+
+/* ── カード変数を実際のスタイルに反映 ── */
+.tier-card,
+.monst-card,
+.apex-card {
+  width: var(--card-w) !important;
+}
+.tier-card-img,
+.tier-card-img-placeholder,
+.monst-card-img-wrap,
+.apex-card-img-wrap {
+  height: var(--card-img-h) !important;
+}
+.tier-card-name,
+.monst-card-name,
+.apex-card-name {
+  font-size: var(--card-font) !important;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -440,4 +504,511 @@ body.edit-mode .product-card-actions { display: flex; }
   .nav-btn { padding: 4px 9px; font-size: 0.75rem; }
 }
 
+/* ============================================================
+   設定パネル
+   ============================================================ */
+.settings-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.85rem;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.settings-btn:hover { border-color: var(--ink); color: var(--ink); }
+.settings-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
 
+.settings-panel {
+  display: none;
+  position: fixed;
+  top: 68px; right: 1.5rem;
+  width: 280px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  animation: slideUp 0.18s ease;
+}
+.settings-panel.is-open { display: block; }
+
+.settings-panel-header {
+  padding: 0.9rem 1.1rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.settings-section {
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.settings-section:last-child { border-bottom: none; }
+
+.settings-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.65rem;
+}
+
+.settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font);
+}
+.settings-option:hover { border-color: var(--border-dark); background: var(--bg-sub); }
+.settings-option.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.settings-option-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.settings-option-desc {
+  font-size: 0.7rem;
+  opacity: 0.65;
+  margin-top: 1px;
+}
+.settings-option.active .settings-option-desc { opacity: 0.75; }
+.settings-check {
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.settings-option.active .settings-check { opacity: 1; }
+
+/* ============================================================
+   アニメーション定義
+   ============================================================ */
+
+/* キーフレーム */
+@keyframes fadeUpSoft {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUpBig {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.85); }
+  70%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+@keyframes tierGlow {
+  0%   { box-shadow: 0 0 0 0 rgba(17,17,16,0.25); }
+  50%  { box-shadow: 0 0 0 6px rgba(17,17,16,0); }
+  100% { box-shadow: 0 0 0 0 rgba(17,17,16,0); }
+}
+@keyframes dropSuccess {
+  0%   { background: var(--accent-light); }
+  60%  { background: rgba(46,139,82,0.12); }
+  100% { background: transparent; }
+}
+
+/* ── アニメーションなし（デフォルト） ── */
+/* 何も追加しない */
+
+/* ── 控えめアニメーション ── */
+body.anim-subtle .tier-card,
+body.anim-subtle .apex-card,
+body.anim-subtle .monst-card {
+  animation: fadeUpSoft 0.22s ease both;
+}
+body.anim-subtle .product-card {
+  animation: fadeUpSoft 0.22s ease both;
+}
+body.anim-subtle .tier-row {
+  animation: slideInLeft 0.2s ease both;
+}
+body.anim-subtle .modal-box {
+  animation: fadeUpSoft 0.2s ease both;
+}
+body.anim-subtle .tier-card:hover,
+body.anim-subtle .apex-card:hover,
+body.anim-subtle .monst-card:hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+body.anim-subtle .drop-success {
+  animation: dropSuccess 0.6s ease forwards;
+}
+
+/* ── 派手めアニメーション ── */
+body.anim-fancy .tier-card,
+body.anim-fancy .apex-card,
+body.anim-fancy .monst-card {
+  animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+body.anim-fancy .product-card {
+  animation: fadeUpBig 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+body.anim-fancy .tier-row {
+  animation: slideInLeft 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+body.anim-fancy .modal-box {
+  animation: fadeUpBig 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+body.anim-fancy .tier-card:hover,
+body.anim-fancy .apex-card:hover,
+body.anim-fancy .monst-card:hover {
+  transform: translateY(-4px) rotate3d(1,1,0,1.5deg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+body.anim-fancy .product-card:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: var(--shadow-lg) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+body.anim-fancy .nav-btn:hover,
+body.anim-fancy .btn-primary:hover,
+body.anim-fancy .btn-secondary:hover {
+  transform: translateY(-1px);
+  transition: all 0.15s ease;
+}
+body.anim-fancy .drop-success {
+  animation: tierGlow 0.7s ease forwards, dropSuccess 0.7s ease forwards;
+}
+/* カードの順番ずらし */
+body.anim-fancy .tier-card:nth-child(1),
+body.anim-fancy .apex-card:nth-child(1),
+body.anim-fancy .monst-card:nth-child(1),
+body.anim-fancy .product-card:nth-child(1) { animation-delay: 0.03s; }
+body.anim-fancy .tier-card:nth-child(2),
+body.anim-fancy .apex-card:nth-child(2),
+body.anim-fancy .monst-card:nth-child(2),
+body.anim-fancy .product-card:nth-child(2) { animation-delay: 0.07s; }
+body.anim-fancy .tier-card:nth-child(3),
+body.anim-fancy .apex-card:nth-child(3),
+body.anim-fancy .monst-card:nth-child(3),
+body.anim-fancy .product-card:nth-child(3) { animation-delay: 0.11s; }
+body.anim-fancy .tier-card:nth-child(4),
+body.anim-fancy .apex-card:nth-child(4),
+body.anim-fancy .monst-card:nth-child(4),
+body.anim-fancy .product-card:nth-child(4) { animation-delay: 0.15s; }
+body.anim-fancy .tier-card:nth-child(n+5),
+body.anim-fancy .apex-card:nth-child(n+5),
+body.anim-fancy .monst-card:nth-child(n+5),
+body.anim-fancy .product-card:nth-child(n+5) { animation-delay: 0.18s; }
+
+body.anim-subtle .tier-row:nth-child(1) { animation-delay: 0.03s; }
+body.anim-subtle .tier-row:nth-child(2) { animation-delay: 0.07s; }
+body.anim-subtle .tier-row:nth-child(3) { animation-delay: 0.11s; }
+body.anim-subtle .tier-row:nth-child(4) { animation-delay: 0.14s; }
+body.anim-subtle .tier-row:nth-child(5) { animation-delay: 0.17s; }
+body.anim-fancy .tier-row:nth-child(1) { animation-delay: 0.03s; }
+body.anim-fancy .tier-row:nth-child(2) { animation-delay: 0.08s; }
+body.anim-fancy .tier-row:nth-child(3) { animation-delay: 0.13s; }
+body.anim-fancy .tier-row:nth-child(4) { animation-delay: 0.18s; }
+body.anim-fancy .tier-row:nth-child(5) { animation-delay: 0.23s; }
+
+/* ============================================================
+   設定パネル追加UI（ダークモードトグル・履歴・ショートカット等）
+   ============================================================ */
+
+/* パネルのスクロール対応 */
+.settings-panel {
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+/* ダークモードトグル行 */
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.settings-toggle-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.settings-toggle-desc {
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+.settings-toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-track {
+  display: block;
+  width: 38px; height: 22px;
+  background: var(--border-dark);
+  border-radius: 99px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+.toggle-thumb {
+  display: block;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px; left: 3px;
+  transition: transform 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.settings-toggle-btn.on .toggle-track { background: var(--ink); }
+.settings-toggle-btn.on .toggle-thumb { transform: translateX(16px); }
+
+/* アクションボタン（画像保存など） */
+.settings-action-btn {
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+}
+.settings-action-btn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--bg-sub);
+}
+
+/* 履歴 */
+.settings-history-input-wrap {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.65rem;
+}
+.settings-history-input {
+  flex: 1;
+  padding: 6px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  min-width: 0;
+}
+.settings-history-input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.settings-history-input::placeholder { color: var(--ink-3); }
+.settings-history-add-btn {
+  width: 30px; height: 30px;
+  background: var(--ink);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.settings-history-add-btn:hover { background: #333; }
+
+.settings-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.settings-history-empty {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  text-align: center;
+  padding: 0.75rem 0;
+}
+.settings-history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-sub);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.settings-history-text {
+  flex: 1;
+  font-size: 0.76rem;
+  color: var(--ink);
+  line-height: 1.4;
+  min-width: 0;
+  word-break: break-all;
+}
+.settings-history-date {
+  font-size: 0.65rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  margin-top: 1px;
+}
+.settings-history-del {
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.settings-history-del:hover { color: var(--danger); background: rgba(214,54,54,0.08); }
+
+/* キーボードショートカット */
+.settings-shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.settings-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--bg-sub);
+  border: 1px solid var(--border-dark);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   ドラッグ中の影・ティア行ストライプ・演出系
+   ============================================================ */
+
+/* ── ドラッグ中カードに浮いた影 ── */
+.tier-card.dragging,
+.monst-card.dragging,
+.apex-card.dragging {
+  opacity: 0.85 !important;
+  transform: scale(1.08) rotate(2deg) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.28), 0 6px 12px rgba(0,0,0,0.18) !important;
+  z-index: 999;
+  cursor: grabbing !important;
+}
+
+/* ── ティア行のストライプ ── */
+.tier-board .tier-row:nth-child(even),
+#tier-container .tier-row:nth-child(even),
+#legend-tier-container .tier-row:nth-child(even),
+#weapon-tier-container .tier-row:nth-child(even) {
+  background: color-mix(in srgb, var(--bg-sub) 40%, var(--bg-card));
+}
+
+/* ダークモード時はより濃いストライプ */
+body.dark-mode .tier-board .tier-row:nth-child(even),
+body.dark-mode #tier-container .tier-row:nth-child(even),
+body.dark-mode #legend-tier-container .tier-row:nth-child(even),
+body.dark-mode #weapon-tier-container .tier-row:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+
+/* ── ページ遷移アニメーション ── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.main-content {
+  animation: pageEnter 0.35s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── ティア表ローディング演出（行が順番にスライドイン） ── */
+@keyframes tierRowEnter {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ローディング完了後の演出クラス（JSで付与） */
+.tier-board-loaded .tier-row,
+#tier-container.tier-board-loaded .tier-row,
+#legend-tier-container.tier-board-loaded .tier-row,
+#weapon-tier-container.tier-board-loaded .tier-row {
+  animation: tierRowEnter 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+.tier-board-loaded .tier-row:nth-child(1),
+#tier-container.tier-board-loaded .tier-row:nth-child(1),
+#legend-tier-container.tier-board-loaded .tier-row:nth-child(1),
+#weapon-tier-container.tier-board-loaded .tier-row:nth-child(1) { animation-delay: 0.05s; }
+.tier-board-loaded .tier-row:nth-child(2),
+#tier-container.tier-board-loaded .tier-row:nth-child(2),
+#legend-tier-container.tier-board-loaded .tier-row:nth-child(2),
+#weapon-tier-container.tier-board-loaded .tier-row:nth-child(2) { animation-delay: 0.12s; }
+.tier-board-loaded .tier-row:nth-child(3),
+#tier-container.tier-board-loaded .tier-row:nth-child(3),
+#legend-tier-container.tier-board-loaded .tier-row:nth-child(3),
+#weapon-tier-container.tier-board-loaded .tier-row:nth-child(3) { animation-delay: 0.19s; }
+.tier-board-loaded .tier-row:nth-child(4),
+#tier-container.tier-board-loaded .tier-row:nth-child(4),
+#legend-tier-container.tier-board-loaded .tier-row:nth-child(4),
+#weapon-tier-container.tier-board-loaded .tier-row:nth-child(4) { animation-delay: 0.26s; }
+.tier-board-loaded .tier-row:nth-child(5),
+#tier-container.tier-board-loaded .tier-row:nth-child(5),
+#legend-tier-container.tier-board-loaded .tier-row:nth-child(5),
+#weapon-tier-container.tier-board-loaded .tier-row:nth-child(5) { animation-delay: 0.33s; }
+
+/* ページ遷移：タブ切り替え時のビューアニメーション */
+@keyframes viewSlideIn {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.view.active {
+  animation: viewSlideIn 0.28s cubic-bezier(0.22,1,0.36,1) both;
+}
