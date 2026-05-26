@@ -1,0 +1,24 @@
+# 検索エンジンのクロールを完全にブロック
+User-agent: *
+Disallow: /
+
+# Googlebot 個別設定
+User-agent: Googlebot
+Disallow: /
+
+# Bingbot 個別設定
+User-agent: Bingbot
+Disallow: /
+
+# その他主要クローラー
+User-agent: Slurp
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
