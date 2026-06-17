@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <title>おすすめ商品・ティア表</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- ===== ヘッダー（1つに統合） ===== -->
+<header class="site-header">
+  <div class="header-inner">
+
+    <!-- サイト切り替えタブ -->
+    <div class="site-tabs">
+      <a href="index.html" class="site-tab active">おすすめ商品</a>
+      <a href="monst.html" class="site-tab">モンスト攻略</a>
+    </div>
+
+    <!-- ロゴ -->
+    <div class="header-logo">
+      <i class="fas fa-star"></i>
+      <span class="logo-text">おすすめ＆ティア表</span>
+    </div>
+
+    <!-- ビュー切り替えナビ -->
+    <nav class="header-nav">
+      <button class="nav-btn active" data-view="tier">
+        <i class="fas fa-th-large"></i> ティア表
+      </button>
+      <button class="nav-btn" data-view="products">
+        <i class="fas fa-box-open"></i> 商品一覧
+      </button>
+    </nav>
+
+    <!-- 編集ボタン -->
+    <div class="header-actions">
+      <button id="btn-edit-mode" class="btn-toggle-edit" title="編集モード切替">
+        <i class="fas fa-edit"></i> 編集
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== メインコンテンツ ===== -->
+<main class="main-content">
+
+  <!-- ======= ティア表ビュー ======= -->
+  <section id="view-tier" class="view active">
+    <div class="view-header">
+      <h1 class="view-title"><i class="fas fa-trophy"></i> ティア表</h1>
+      <div class="view-actions" id="tier-edit-actions">
+        <button id="btn-add-tier-item" class="btn-primary">
+          <i class="fas fa-plus"></i> 商品を追加
+        </button>
+      </div>
+    </div>
+
+    <div id="tier-board" class="tier-board">
+      <div class="tier-loading">
+        <i class="fas fa-spinner fa-spin"></i> 読み込み中...
+      </div>
+    </div>
+
+    <!-- 未分類エリア -->
+    <div id="tier-unassigned" class="tier-unassigned">
+      <h3 class="unassigned-title"><i class="fas fa-inbox"></i> 未分類の商品</h3>
+      <div id="unassigned-items" class="unassigned-items" data-tier="未分類"></div>
+    </div>
+  </section>
+
+  <!-- ======= 商品一覧ビュー ======= -->
+  <section id="view-products" class="view">
+    <div class="view-header">
+      <h1 class="view-title"><i class="fas fa-box-open"></i> おすすめ商品一覧</h1>
+      <div class="view-actions">
+        <div class="search-wrap">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="product-search" class="search-input" placeholder="商品を検索..." />
+        </div>
+        <div id="product-edit-actions">
+          <button id="btn-add-product" class="btn-primary">
+            <i class="fas fa-plus"></i> 商品を追加
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">カテゴリ：</span>
+      <div id="category-filters" class="filter-chips">
+        <button class="chip active" data-cat="all">すべて</button>
+      </div>
+    </div>
+
+    <div id="products-grid" class="products-grid">
+      <div class="tier-loading">
+        <i class="fas fa-spinner fa-spin"></i> 読み込み中...
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== モーダル：商品追加/編集 ===== -->
+<div id="modal-product" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-title" class="modal-title">商品を追加</h2>
+      <button class="modal-close" id="btn-modal-close"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="form-product" class="modal-form">
+      <input type="hidden" id="field-id" />
+
+      <div class="form-row">
+        <label class="form-label">商品名 <span class="required">*</span></label>
+        <input type="text" id="field-name" class="form-input" placeholder="商品名を入力" required />
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">説明</label>
+        <textarea id="field-description" class="form-textarea" placeholder="商品の説明を入力" rows="3"></textarea>
+      </div>
+
+      <div class="form-row-2col">
+        <div class="form-row">
+          <label class="form-label">価格</label>
+          <input type="text" id="field-price" class="form-input" placeholder="例：¥3,980" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">カテゴリ</label>
+          <input type="text" id="field-category" class="form-input" placeholder="例：ガジェット" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">画像URL</label>
+        <input type="url" id="field-image-url" class="form-input" placeholder="https://..." />
+        <div id="image-preview" class="image-preview-wrap">
+          <img id="preview-img" src="" alt="プレビュー" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">購入リンク</label>
+        <input type="url" id="field-link" class="form-input" placeholder="https://..." />
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">ティアランク</label>
+        <div class="tier-selector" id="tier-selector">
+          <button type="button" class="tier-btn" data-tier="S">S</button>
+          <button type="button" class="tier-btn" data-tier="A">A</button>
+          <button type="button" class="tier-btn" data-tier="B">B</button>
+          <button type="button" class="tier-btn" data-tier="C">C</button>
+          <button type="button" class="tier-btn" data-tier="D">D</button>
+          <button type="button" class="tier-btn active" data-tier="未分類">未分類</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">タグ（カンマ区切り）</label>
+        <input type="text" id="field-tags" class="form-input" placeholder="例：おすすめ, 人気, コスパ良好" />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-cancel-modal">キャンセル</button>
+        <button type="submit" class="btn-primary" id="btn-save-product">
+          <i class="fas fa-save"></i> 保存する
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 商品詳細モーダル ===== -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-box modal-detail-box">
+    <div class="modal-header">
+      <h2 id="detail-title" class="modal-title">商品詳細</h2>
+      <button class="modal-close" id="btn-detail-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="detail-content" class="detail-content">
+      <!-- JS で動的挿入 -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== 削除確認ダイアログ ===== -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box modal-confirm-box">
+    <div class="modal-header">
+      <h2 class="modal-title"><i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i> 削除確認</h2>
+    </div>
+    <p id="confirm-message" class="confirm-message">この商品を削除しますか？</p>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-confirm-cancel">キャンセル</button>
+      <button class="btn-danger" id="btn-confirm-ok">
+        <i class="fas fa-trash"></i> 削除する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== トースト通知 ===== -->
+<div id="toast" class="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

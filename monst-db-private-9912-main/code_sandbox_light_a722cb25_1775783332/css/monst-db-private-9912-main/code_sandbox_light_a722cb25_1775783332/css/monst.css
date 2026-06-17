@@ -1,0 +1,601 @@
+/* ============================================================
+   monst.css — モンスト攻略専用スタイル
+   style.cssの変数・共通クラスをそのまま利用
+   ============================================================ */
+
+/* ── ヘッダーロゴ色 ── */
+.header-logo .fa-dragon { color: #e67e22; font-size: 0.9rem; }
+
+/* ── 検索ボックス ── */
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 9px;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.search-input {
+  padding: 5px 10px 5px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  width: 200px;
+  transition: all var(--transition);
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--ink);
+  width: 240px;
+}
+.search-input::placeholder { color: var(--ink-3); }
+
+/* ── ティア表コンテナ（style.cssのtier-boardと同じ構造） ── */
+#tier-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--border);
+}
+
+/* ── ティア行 ── */
+#tier-container .tier-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 96px;
+  background: var(--bg-card);
+}
+
+/* ── ティアラベル ── */
+#tier-container .tier-label {
+  width: 62px;
+  min-width: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.03em;
+}
+
+/* ── ティアドロップゾーン ── */
+#tier-container .tier-row-content {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 96px;
+  border-left: 1px solid var(--border);
+  transition: background var(--transition);
+  position: relative;
+}
+
+#tier-container .tier-row-content.drag-over {
+  background: var(--accent-light);
+  outline: 1px dashed var(--border-dark);
+  outline-offset: -6px;
+}
+
+#tier-container .tier-row-content.empty::after {
+  content: "ドラッグして移動";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  pointer-events: none;
+  opacity: 0.5;
+  letter-spacing: 0.03em;
+}
+
+/* ── キャラカード ── */
+.monst-card {
+  width: 94px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid var(--border);
+  position: relative;
+  user-select: none;
+}
+.monst-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-dark);
+}
+.monst-card.dragging {
+  opacity: 0.3;
+  transform: scale(0.93);
+}
+
+.monst-card-img-wrap {
+  width: 100%;
+  height: 60px;
+  background: var(--bg-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.monst-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.monst-card-img-placeholder {
+  color: var(--ink-3);
+  font-size: 1.3rem;
+}
+
+/* 形態バッジ */
+.monst-form-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #fff;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+.badge-進化    { background: #2563a8; }
+.badge-神化    { background: #7b3fa0; }
+.badge-獣神化  { background: #c0392b; }
+.badge-獣神化改{ background: #d4750a; }
+.badge-真獣神化{ background: #2e7d52; }
+
+.monst-card-name {
+  padding: 5px 6px;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 編集モード削除ボタン */
+.monst-card .card-delete-btn {
+  display: none;
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  font-size: 0.58rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: all var(--transition);
+}
+.monst-card .card-delete-btn:hover { background: var(--danger-hover); }
+body.edit-mode .monst-card .card-delete-btn { display: flex; }
+body.edit-mode .monst-card { cursor: grab; }
+body.edit-mode .monst-card:active { cursor: grabbing; }
+
+/* ── クエストカード（商品一覧グリッドと同じ構造） ── */
+.quest-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+  cursor: pointer;
+  position: relative;
+}
+.quest-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-dark);
+}
+
+.quest-card-img {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: var(--bg-sub);
+  display: block;
+}
+.quest-card-img-placeholder {
+  width: 100%;
+  height: 140px;
+  background: var(--bg-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  font-size: 2rem;
+}
+.quest-card-body { padding: 0.85rem 0.95rem 0.95rem; }
+
+.quest-card-category {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-bottom: 0.4rem;
+  color: #fff;
+  background: var(--ink-2);
+}
+
+.quest-card-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 0.3rem;
+}
+.quest-card-desc {
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* クエストカード編集ボタン */
+.quest-card-actions {
+  display: none;
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  gap: 4px;
+}
+body.edit-mode .quest-card-actions { display: flex; }
+
+/* ── 形態セレクター ── */
+.form-type-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.form-type-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: var(--ink-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.form-type-btn:hover { border-color: var(--ink); color: var(--ink); }
+.form-type-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── 特殊フィールドラベル色 ── */
+.monst-label-connect { color: #d4750a !important; }
+.monst-label-shot    { color: #2e7d52 !important; }
+.monst-label-assist  { color: #2563a8 !important; }
+
+/* ── 詳細モーダル ステータス表示 ── */
+.monst-status-table {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 0.75rem;
+  font-size: 0.83rem;
+}
+.monst-status-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.monst-status-row:last-child { border-bottom: none; }
+.monst-status-label {
+  width: 110px;
+  min-width: 110px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-sub);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+.monst-status-value {
+  flex: 1;
+  padding: 8px 12px;
+  color: var(--ink);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+}
+.monst-status-value.highlight { color: #2563a8; font-weight: 600; }
+.monst-status-value.connect   { color: #d4750a; font-weight: 600; }
+.monst-status-value.shot      { color: #2e7d52; font-weight: 600; }
+.monst-status-value.assist    { color: #2563a8; font-weight: 600; }
+
+/* 形態バッジ（詳細用） */
+.monst-form-badge-lg {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+/* ── 未分類エリア ── */
+#unclassified-container {
+  margin-top: 1.25rem;
+}
+#tier-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 68px;
+}
+#tier-pool.drag-over {
+  background: var(--accent-light);
+  outline: 1px dashed var(--border-dark);
+  outline-offset: -6px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── カテゴリフィルター（クエスト一覧用） ── */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── レスポンシブ ── */
+@media (max-width: 768px) {
+  .monst-card { width: 78px; }
+  .monst-card-img-wrap { height: 52px; }
+  #tier-container .tier-label { width: 46px; min-width: 46px; font-size: 1.2rem; }
+  .search-input { width: 150px; }
+  .search-input:focus { width: 180px; }
+}
+@media (max-width: 480px) {
+  #tier-container .tier-label { width: 40px; min-width: 40px; font-size: 1rem; }
+  .monst-card { width: 68px; }
+}
+
+
+/* ============================================================
+   全体キャラからコピーするモーダル
+   ============================================================ */
+
+.modal-copy-box {
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.copy-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.3rem 0;
+}
+
+/* 検索 */
+.copy-search-wrap {
+  position: relative;
+  margin-bottom: 0.85rem;
+}
+.copy-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.copy-search-input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  background: var(--bg);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 0.83rem;
+  transition: border-color var(--transition);
+}
+.copy-search-input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.copy-search-input::placeholder { color: var(--ink-3); }
+
+/* ティア選択 */
+.copy-tier-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.5rem;
+}
+.copy-tier-selector {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.copy-tier-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: var(--ink-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.copy-tier-btn:hover { border-color: var(--ink); color: var(--ink); }
+.copy-tier-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+/* キャラ一覧 */
+.copy-char-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-bottom: 1rem;
+}
+
+.copy-char-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ink-3);
+}
+.copy-char-empty i { font-size: 2rem; display: block; margin-bottom: 0.75rem; opacity: 0.3; }
+.copy-char-empty p { font-size: 0.82rem; }
+
+/* キャラアイテム */
+.copy-char-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.copy-char-item:hover:not(.existing) {
+  border-color: var(--border-dark);
+  background: var(--bg-sub);
+}
+.copy-char-item.selected {
+  border-color: var(--ink);
+  background: var(--accent-light);
+}
+.copy-char-item.existing {
+  opacity: 0.55;
+  cursor: default;
+  background: var(--bg-sub);
+}
+
+/* キャラ画像 */
+.copy-char-img-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-sub);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.copy-char-img-wrap img {
+  width: 100%; height: 100%; object-fit: contain;
+}
+.copy-char-img-placeholder {
+  color: var(--ink-3); font-size: 1rem;
+}
+
+/* キャラ情報 */
+.copy-char-info { flex: 1; min-width: 0; }
+.copy-char-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy-char-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+.copy-char-tier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-display);
+}
+.copy-char-form {
+  font-size: 0.65rem;
+  color: var(--ink-3);
+  background: var(--bg-sub);
+  padding: 1px 6px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+}
+.copy-char-existing {
+  font-size: 0.62rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* チェックマーク */
+.copy-char-check {
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+/* フッター */
+.copy-selected-count {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  font-weight: 500;
+  margin-right: auto;
+}

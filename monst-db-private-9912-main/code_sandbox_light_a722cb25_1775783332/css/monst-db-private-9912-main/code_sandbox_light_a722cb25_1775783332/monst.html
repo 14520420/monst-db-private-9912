@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>モンスト攻略・最強ティア表</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/monst.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<header class="site-header">
+  <div class="header-inner">
+
+    <div class="site-tabs">
+      <a href="index.html" class="site-tab">おすすめ商品</a>
+      <a href="monst.html" class="site-tab active">モンスト攻略</a>
+      <a href="apex.html"  class="site-tab">APEX攻略</a>
+    </div>
+
+    <div class="header-logo">
+      <i class="fas fa-dragon"></i>
+      <span class="logo-text">MONST DATABASE</span>
+    </div>
+
+    <nav class="header-nav">
+      <button class="nav-btn active" data-view="tier">
+        <i class="fas fa-crown"></i> 最強ティア表
+      </button>
+      <button class="nav-btn" data-view="list">
+        <i class="fas fa-scroll"></i> クエスト一覧
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="search-wrap">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="search-input" class="search-input" placeholder="キャラ・クエスト検索...">
+      </div>
+      <button id="btn-edit-mode" class="btn-toggle-edit" title="編集モード切替">
+        <i class="fas fa-edit"></i> 編集
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== メインコンテンツ ===== -->
+<main class="main-content">
+
+  <!-- 最強ティア表ビュー -->
+  <section id="view-tier" class="view active">
+    <div class="view-header">
+      <h1 class="view-title" id="tier-title">
+        <i class="fas fa-crown"></i> 全キャラ最強ランキング
+      </h1>
+      <div class="view-actions" id="tier-edit-actions" style="display:none;">
+        <button id="btn-add-char" class="btn-primary">
+          <i class="fas fa-user-plus"></i> キャラ追加
+        </button>
+        <button id="btn-copy-from-global" class="btn-secondary" style="display:none;">
+          <i class="fas fa-copy"></i> 全体から追加
+        </button>
+        <button id="btn-back-to-all" class="btn-secondary" style="display:none;">
+          <i class="fas fa-arrow-left"></i> 全体に戻る
+        </button>
+      </div>
+    </div>
+
+    <div id="tier-container" class="tier-board"></div>
+
+    <div id="unclassified-container" class="tier-unassigned" style="display:none;">
+      <h3 class="unassigned-title"><i class="fas fa-inbox"></i> 未分類のキャラ</h3>
+      <div id="tier-pool" class="unassigned-items"></div>
+    </div>
+  </section>
+
+  <!-- クエスト一覧ビュー -->
+  <section id="view-list" class="view">
+    <div class="view-header">
+      <h1 class="view-title"><i class="fas fa-skull-crossbones"></i> クエスト一覧</h1>
+      <div class="view-actions">
+        <div class="filter-chips" id="category-filters">
+          <button class="chip active" data-category="all">すべて</button>
+          <button class="chip" data-category="黎絶">黎絶</button>
+          <button class="chip" data-category="轟絶">轟絶</button>
+          <button class="chip" data-category="爆絶">爆絶</button>
+          <button class="chip" data-category="超絶">超絶</button>
+          <button class="chip" data-category="超究極">超究極</button>
+          <button class="chip" data-category="天魔(試練)">天魔(試練)</button>
+          <button class="chip" data-category="天魔(空中庭園)">天魔(空中庭園)</button>
+          <button class="chip" data-category="禁忌">禁忌</button>
+        </div>
+        <div id="quest-edit-actions" style="display:none;">
+          <button id="btn-add-quest" class="btn-primary">
+            <i class="fas fa-plus"></i> クエスト追加
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="products-grid" class="products-grid"></div>
+  </section>
+
+</main>
+
+<!-- ===== モーダル：キャラ/クエスト 追加・編集 ===== -->
+<div id="modal-product" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-title" class="modal-title">編集</h2>
+      <button class="modal-close" id="btn-close-modal"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="product-form" class="modal-form">
+      <input type="hidden" id="p-id">
+      <input type="hidden" id="p-type">
+
+      <!-- 共通：名前 -->
+      <div class="form-row">
+        <label class="form-label">名前 <span class="required">*</span></label>
+        <input type="text" id="p-name" class="form-input" required>
+      </div>
+
+      <!-- 共通：属性 / 種別 + ティア -->
+      <div class="form-row-2col">
+        <div class="form-row">
+          <label class="form-label">属性 / クエスト種別</label>
+          <select id="p-category" class="form-input"></select>
+        </div>
+        <div class="form-row" id="field-tier">
+          <label class="form-label">ティア</label>
+          <select id="p-tier" class="form-input">
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="未分類">未分類</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 共通：画像URL -->
+      <div class="form-row">
+        <label class="form-label">画像URL</label>
+        <input type="text" id="p-image-url" class="form-input" placeholder="https://...">
+      </div>
+
+      <!-- キャラ専用フィールド -->
+      <div id="char-status-fields">
+
+        <!-- 形態選択 -->
+        <div class="form-row">
+          <label class="form-label">形態</label>
+          <div class="form-type-selector" id="p-form-selector">
+            <button type="button" class="form-type-btn" data-form="進化">進化</button>
+            <button type="button" class="form-type-btn" data-form="神化">神化</button>
+            <button type="button" class="form-type-btn" data-form="獣神化">獣神化</button>
+            <button type="button" class="form-type-btn" data-form="獣神化・改">獣神化・改</button>
+            <button type="button" class="form-type-btn" data-form="真獣神化">真獣神化</button>
+          </div>
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-row">
+            <label class="form-label">タイプ</label>
+            <input type="text" id="p-type-detail" class="form-input">
+          </div>
+          <div class="form-row">
+            <label class="form-label">ラック</label>
+            <input type="text" id="p-luck" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">アビリティ</label>
+          <input type="text" id="p-abi" class="form-input">
+        </div>
+        <div class="form-row">
+          <label class="form-label">ゲージ</label>
+          <input type="text" id="p-gauge" class="form-input">
+        </div>
+        <div class="form-row">
+          <label class="form-label">SS</label>
+          <input type="text" id="p-ss" class="form-input">
+        </div>
+        <div class="form-row">
+          <label class="form-label">友情コンボ</label>
+          <input type="text" id="p-main-friend" class="form-input">
+        </div>
+        <div class="form-row">
+          <label class="form-label">サブ友情</label>
+          <input type="text" id="p-sub-friend" class="form-input">
+        </div>
+
+        <!-- 獣神化・改専用：コネクト・コネクト条件 -->
+        <div id="field-connect" class="form-row" style="display:none;">
+          <label class="form-label monst-label-connect">コネクト</label>
+          <input type="text" id="p-connect" class="form-input" placeholder="コネクト効果を入力">
+        </div>
+        <div id="field-connect-cond" class="form-row" style="display:none;">
+          <label class="form-label monst-label-connect">コネクト条件</label>
+          <input type="text" id="p-connect-cond" class="form-input" placeholder="コネクト条件を入力">
+        </div>
+
+        <!-- 真獣神化専用：ショットスキル・アシストスキル -->
+        <div id="field-shot-skill" class="form-row" style="display:none;">
+          <label class="form-label monst-label-shot">ショットスキル</label>
+          <input type="text" id="p-shot-skill" class="form-input" placeholder="ショットスキルを入力">
+        </div>
+        <div id="field-assist-skill" class="form-row" style="display:none;">
+          <label class="form-label monst-label-assist">アシストスキル</label>
+          <input type="text" id="p-assist-skill" class="form-input" placeholder="アシストスキルを入力">
+        </div>
+
+      </div>
+
+      <!-- クエスト専用：ギミック -->
+      <div id="quest-desc-field" style="display:none;">
+        <div class="form-row">
+          <label class="form-label">ギミック詳細</label>
+          <textarea id="p-description" class="form-textarea" rows="4" placeholder="ギミックや攻略メモ"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-cancel-modal">キャンセル</button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i> 保存する
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 詳細モーダル ===== -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-box modal-detail-box">
+    <div class="modal-header">
+      <h2 id="detail-modal-title" class="modal-title">詳細</h2>
+      <button class="modal-close" id="btn-detail-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="detail-content" class="detail-content"></div>
+  </div>
+</div>
+
+<!-- ===== 削除確認 ===== -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box modal-confirm-box">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-exclamation-triangle" style="color:#d63636;"></i> 削除確認
+      </h2>
+    </div>
+    <p id="confirm-message" class="confirm-message">削除しますか？</p>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-confirm-cancel">キャンセル</button>
+      <button class="btn-danger" id="btn-confirm-ok">
+        <i class="fas fa-trash"></i> 削除する
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== トースト ===== -->
+<div id="toast" class="toast"></div>
+
+<!-- ===== 全体キャラから選ぶモーダル ===== -->
+<div id="modal-copy-char" class="modal-overlay">
+  <div class="modal-box modal-copy-box">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-copy"></i> 全体キャラから追加
+      </h2>
+      <button class="modal-close" id="btn-copy-modal-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="copy-modal-body">
+      <!-- 検索 -->
+      <div class="copy-search-wrap">
+        <i class="fas fa-search copy-search-icon"></i>
+        <input type="text" id="copy-search-input" class="copy-search-input"
+          placeholder="キャラ名で絞り込み...">
+      </div>
+      <!-- ティア選択 -->
+      <div class="copy-tier-label">追加後のティア</div>
+      <div class="copy-tier-selector" id="copy-tier-selector">
+        <button type="button" class="copy-tier-btn active" data-tier="S">S</button>
+        <button type="button" class="copy-tier-btn" data-tier="A">A</button>
+        <button type="button" class="copy-tier-btn" data-tier="B">B</button>
+        <button type="button" class="copy-tier-btn" data-tier="C">C</button>
+        <button type="button" class="copy-tier-btn" data-tier="D">D</button>
+        <button type="button" class="copy-tier-btn" data-tier="未分類">未分類</button>
+      </div>
+      <!-- キャラ一覧 -->
+      <div class="copy-char-list" id="copy-char-list"></div>
+    </div>
+    <div class="modal-footer">
+      <span class="copy-selected-count" id="copy-selected-count">0体選択中</span>
+      <button class="btn-secondary" id="btn-copy-cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-copy-confirm">
+        <i class="fas fa-plus"></i> 追加する
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/monst.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>
