@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "monst-db-private-9912",
+  "compatibility_date": "2026-04-13",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "code_sandbox_light_a722cb25_1775783332"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
