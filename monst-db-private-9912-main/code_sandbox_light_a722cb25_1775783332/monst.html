@@ -62,6 +62,9 @@
         <button id="btn-add-char" class="btn-primary">
           <i class="fas fa-user-plus"></i> キャラ追加
         </button>
+        <button id="btn-copy-from-global" class="btn-secondary" style="display:none;">
+          <i class="fas fa-copy"></i> 全体から追加
+        </button>
         <button id="btn-back-to-all" class="btn-secondary" style="display:none;">
           <i class="fas fa-arrow-left"></i> 全体に戻る
         </button>
@@ -264,6 +267,47 @@
 
 <!-- ===== トースト ===== -->
 <div id="toast" class="toast"></div>
+
+<!-- ===== 全体キャラから選ぶモーダル ===== -->
+<div id="modal-copy-char" class="modal-overlay">
+  <div class="modal-box modal-copy-box">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-copy"></i> 全体キャラから追加
+      </h2>
+      <button class="modal-close" id="btn-copy-modal-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="copy-modal-body">
+      <!-- 検索 -->
+      <div class="copy-search-wrap">
+        <i class="fas fa-search copy-search-icon"></i>
+        <input type="text" id="copy-search-input" class="copy-search-input"
+          placeholder="キャラ名で絞り込み...">
+      </div>
+      <!-- ティア選択 -->
+      <div class="copy-tier-label">追加後のティア</div>
+      <div class="copy-tier-selector" id="copy-tier-selector">
+        <button type="button" class="copy-tier-btn active" data-tier="S">S</button>
+        <button type="button" class="copy-tier-btn" data-tier="A">A</button>
+        <button type="button" class="copy-tier-btn" data-tier="B">B</button>
+        <button type="button" class="copy-tier-btn" data-tier="C">C</button>
+        <button type="button" class="copy-tier-btn" data-tier="D">D</button>
+        <button type="button" class="copy-tier-btn" data-tier="未分類">未分類</button>
+      </div>
+      <!-- キャラ一覧 -->
+      <div class="copy-char-list" id="copy-char-list"></div>
+    </div>
+    <div class="modal-footer">
+      <span class="copy-selected-count" id="copy-selected-count">0体選択中</span>
+      <button class="btn-secondary" id="btn-copy-cancel">キャンセル</button>
+      <button class="btn-primary" id="btn-copy-confirm">
+        <i class="fas fa-plus"></i> 追加する
+      </button>
+    </div>
+  </div>
+</div>
 
 <script src="js/monst.js"></script>
 <script src="js/settings.js"></script>

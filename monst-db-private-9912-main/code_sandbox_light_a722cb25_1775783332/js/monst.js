@@ -158,10 +158,14 @@ function setupEventListeners() {
   document.getElementById('btn-add-char').onclick  = () => openEditModal('character');
   document.getElementById('btn-add-quest').onclick = () => openEditModal('quest');
 
+  // 全体キャラから追加ボタン
+  document.getElementById('btn-copy-from-global').onclick = () => openCopyModal();
+
   // 全体に戻るボタン
   document.getElementById('btn-back-to-all').onclick = () => {
     currentQuestId = null;
     document.getElementById('btn-back-to-all').style.display = 'none';
+    document.getElementById('btn-copy-from-global').style.display = 'none';
     document.getElementById('btn-add-char').style.display = isEditMode ? 'inline-flex' : 'none';
     document.getElementById('tier-title').innerHTML = '<i class="fas fa-crown"></i> 全キャラ最強ランキング';
     render();
@@ -259,7 +263,10 @@ function render() {
       document.getElementById('tier-title').innerHTML =
         `<i class="fas fa-crosshairs"></i> 【適正】${escHtml(quest.name)}`;
       document.getElementById('btn-back-to-all').style.display = 'inline-flex';
-      if (isEditMode) document.getElementById('btn-add-char').style.display = 'inline-flex';
+      if (isEditMode) {
+        document.getElementById('btn-add-char').style.display = 'inline-flex';
+        document.getElementById('btn-copy-from-global').style.display = 'inline-flex';
+      }
       renderTierBoard(tierContainer, tierPool, quest.suitableChars || [], 'suitableChar');
       document.getElementById('view-list').classList.remove('active');
       document.getElementById('view-tier').classList.add('active');
@@ -737,5 +744,178 @@ function showToast(message, type = '') {
   toast.className      = type ? `toast ${type}` : 'toast';
   toast.style.display  = 'block';
   if (toastTimer) clearTimeout(toastTimer);
+
+/* ==========================================================
+   全体キャラから適正キャラをコピーするモーダル
+   ========================================================== */
+
+let selectedCopyIds = new Set();
+let copyTier = 'S';
+
+function openCopyModal() {
+  if (!currentQuestId) return;
+  selectedCopyIds.clear();
+  copyTier = 'S';
+
+  // ティアボタンのリセット
+  document.querySelectorAll('.copy-tier-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tier === 'S');
+  });
+
+  // 検索リセット
+  const searchEl = document.getElementById('copy-search-input');
+  if (searchEl) searchEl.value = '';
+
+  updateCopySelectedCount();
+  renderCopyCharList('');
+  document.getElementById('modal-copy-char').classList.add('is-open');
+
+  // ティアボタンのイベント
+  document.querySelectorAll('.copy-tier-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.copy-tier-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      copyTier = btn.dataset.tier;
+    };
+  });
+
+  // 検索のイベント
+  searchEl.oninput = (e) => renderCopyCharList(e.target.value.toLowerCase().trim());
+
+  // 閉じるボタン
+  document.getElementById('btn-copy-modal-close').onclick = closeCopyModal;
+  document.getElementById('btn-copy-cancel').onclick      = closeCopyModal;
+  document.getElementById('modal-copy-char').onclick = (e) => {
+    if (e.target === document.getElementById('modal-copy-char')) closeCopyModal();
+  };
+
+  // 追加ボタン
+  document.getElementById('btn-copy-confirm').onclick = handleCopyConfirm;
+}
+
+function closeCopyModal() {
+  document.getElementById('modal-copy-char').classList.remove('is-open');
+  selectedCopyIds.clear();
+}
+
+function renderCopyCharList(filter = '') {
+  const list = document.getElementById('copy-char-list');
+  if (!list) return;
+
+  // 現在のクエストにすでに登録済みのIDを取得
+  const quest = quests.find(q => q.id === currentQuestId);
+  const existingIds = new Set((quest?.suitableChars || []).map(c => c.id));
+
+  let filtered = characters;
+  if (filter) {
+    filtered = filtered.filter(c => c.name.toLowerCase().includes(filter));
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="copy-char-empty">
+      <i class="fas fa-user-slash"></i>
+      <p>全体ティア表にキャラが登録されていません</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(char => {
+    const isSelected  = selectedCopyIds.has(char.id);
+    const isExisting  = existingIds.has(char.id);
+    const formBadge   = char.form ? `<span class="copy-char-form">${escHtml(char.form)}</span>` : '';
+    const tierColor   = {
+      S:'#c0392b', A:'#d4750a', B:'#b8960a', C:'#2e7d52', D:'#2563a8', '未分類':'#888884'
+    }[char.tier] || '#888884';
+
+    return `
+      <div class="copy-char-item ${isSelected ? 'selected' : ''} ${isExisting ? 'existing' : ''}"
+           data-id="${char.id}">
+        <div class="copy-char-img-wrap">
+          ${char.image_url
+            ? `<img src="${escHtml(char.image_url)}" alt="${escHtml(char.name)}">`
+            : `<div class="copy-char-img-placeholder"><i class="fas fa-user"></i></div>`}
+        </div>
+        <div class="copy-char-info">
+          <div class="copy-char-name">${escHtml(char.name)}</div>
+          <div class="copy-char-meta">
+            <span class="copy-char-tier" style="background:${tierColor}">${escHtml(char.tier || '未')}</span>
+            ${formBadge}
+            ${isExisting ? `<span class="copy-char-existing">登録済み</span>` : ''}
+          </div>
+        </div>
+        <div class="copy-char-check">
+          ${isExisting
+            ? `<i class="fas fa-check-circle" style="color:var(--success)"></i>`
+            : isSelected
+              ? `<i class="fas fa-check-circle" style="color:var(--ink)"></i>`
+              : `<i class="far fa-circle" style="color:var(--border-dark)"></i>`}
+        </div>
+      </div>`;
+  }).join('');
+
+  // クリックイベント
+  list.querySelectorAll('.copy-char-item:not(.existing)').forEach(item => {
+    item.onclick = () => {
+      const id = item.dataset.id;
+      if (selectedCopyIds.has(id)) {
+        selectedCopyIds.delete(id);
+        item.classList.remove('selected');
+        item.querySelector('.copy-char-check').innerHTML =
+          `<i class="far fa-circle" style="color:var(--border-dark)"></i>`;
+      } else {
+        selectedCopyIds.add(id);
+        item.classList.add('selected');
+        item.querySelector('.copy-char-check').innerHTML =
+          `<i class="fas fa-check-circle" style="color:var(--ink)"></i>`;
+      }
+      updateCopySelectedCount();
+    };
+  });
+}
+
+function updateCopySelectedCount() {
+  const el = document.getElementById('copy-selected-count');
+  if (el) el.textContent = `${selectedCopyIds.size}体選択中`;
+}
+
+async function handleCopyConfirm() {
+  if (selectedCopyIds.size === 0) {
+    showToast('キャラを選択してください', 'error');
+    return;
+  }
+
+  const quest = quests.find(q => q.id === currentQuestId);
+  if (!quest) return;
+  if (!quest.suitableChars) quest.suitableChars = [];
+
+  // 選択されたキャラをコピーして追加
+  let addedCount = 0;
+  selectedCopyIds.forEach(id => {
+    const char = characters.find(c => c.id === id);
+    if (!char) return;
+
+    // すでに登録済みならスキップ
+    const alreadyExists = quest.suitableChars.some(c => c.id === id);
+    if (alreadyExists) return;
+
+    // データをコピーして追加（IDは新規生成、ティアはコピー先で選択したもの）
+    quest.suitableChars.push({
+      ...char,
+      id:   generateId(),  // 新規ID
+      tier: copyTier       // 選択したティアで登録
+    });
+    addedCount++;
+  });
+
+  if (addedCount === 0) {
+    showToast('選択したキャラはすでに登録済みです', 'error');
+    return;
+  }
+
+  await saveQuests();
+  closeCopyModal();
+  showToast(`${addedCount}体を追加しました`, 'success');
+  render();
+}
   toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }

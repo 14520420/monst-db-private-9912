@@ -35,6 +35,9 @@
       <button class="nav-btn" data-view="weapons">
         <i class="fas fa-gun"></i> 武器
       </button>
+      <button class="nav-btn" data-view="sensitivity">
+        <i class="fas fa-sliders-h"></i> 感度調整
+      </button>
     </nav>
 
     <div class="header-actions">
@@ -106,6 +109,145 @@
     </div>
   </section>
 
+  <!-- 感度調整ビュー -->
+  <section id="view-sensitivity" class="view">
+    <div class="view-header">
+      <h1 class="view-title">
+        <i class="fas fa-sliders-h"></i> AI感度調整アドバイザー
+      </h1>
+    </div>
+
+    <!-- 入力タイプ切り替え -->
+    <div class="sens-type-tabs">
+      <button class="sens-type-tab active" data-senstype="controller">
+        <i class="fas fa-gamepad"></i> コントローラー
+      </button>
+      <button class="sens-type-tab" data-senstype="mouse">
+        <i class="fas fa-mouse"></i> マウス
+      </button>
+    </div>
+
+    <!-- コントローラー入力 -->
+    <div id="sens-controller" class="sens-panel">
+      <div class="sens-panel-title">現在の設定を入力してください</div>
+      <div class="sens-grid">
+        <div class="sens-input-group">
+          <label class="sens-label">視点移動速度（横）</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="ctrl-look-h" class="sens-input" min="0" max="10" step="0.1" placeholder="例：3.0">
+            <span class="sens-unit">/ 10</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">視点移動速度（縦）</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="ctrl-look-v" class="sens-input" min="0" max="10" step="0.1" placeholder="例：3.0">
+            <span class="sens-unit">/ 10</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">ADS感度（横）</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="ctrl-ads-h" class="sens-input" min="0" max="10" step="0.1" placeholder="例：2.5">
+            <span class="sens-unit">/ 10</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">ADS感度（縦）</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="ctrl-ads-v" class="sens-input" min="0" max="10" step="0.1" placeholder="例：2.5">
+            <span class="sens-unit">/ 10</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">スティック入力デッドゾーン</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="ctrl-deadzone" class="sens-input" min="0" max="1" step="0.01" placeholder="例：0.15">
+            <span class="sens-unit">/ 1.0</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">応答カーブ</label>
+          <select id="ctrl-curve" class="sens-input">
+            <option value="リニア">リニア</option>
+            <option value="クラシック" selected>クラシック</option>
+            <option value="ステディ">ステディ</option>
+          </select>
+        </div>
+      </div>
+      <div class="sens-input-group" style="margin-top:0.75rem;">
+        <label class="sens-label">プレイスタイル・悩み（自由記述）</label>
+        <textarea id="ctrl-note" class="form-textarea" rows="3"
+          placeholder="例：近距離の追いエイムが苦手、遠距離は得意など"></textarea>
+      </div>
+      <button class="sens-ai-btn" id="btn-ctrl-analyze">
+        <i class="fas fa-robot"></i> AIに感度を分析・提案してもらう
+      </button>
+    </div>
+
+    <!-- マウス入力 -->
+    <div id="sens-mouse" class="sens-panel" style="display:none;">
+      <div class="sens-panel-title">まずDPIを入力してください</div>
+      <div class="sens-dpi-section">
+        <div class="sens-input-group">
+          <label class="sens-label">マウスDPI <span class="required">*</span></label>
+          <div class="sens-input-wrap">
+            <input type="number" id="mouse-dpi" class="sens-input sens-dpi-input"
+              min="100" max="32000" step="100" placeholder="例：800">
+            <span class="sens-unit">DPI</span>
+          </div>
+        </div>
+      </div>
+      <div class="sens-grid" style="margin-top:1rem;">
+        <div class="sens-input-group">
+          <label class="sens-label">ゲーム内感度</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="mouse-sens" class="sens-input" min="0.1" max="10" step="0.1" placeholder="例：2.0">
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">ADS感度倍率</label>
+          <div class="sens-input-wrap">
+            <input type="number" id="mouse-ads" class="sens-input" min="0.1" max="2" step="0.1" placeholder="例：1.0">
+            <span class="sens-unit">倍</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">現在のeDPI（自動計算）</label>
+          <div class="sens-input-wrap">
+            <input type="text" id="mouse-edpi-display" class="sens-input" readonly placeholder="DPI × 感度">
+            <span class="sens-unit">eDPI</span>
+          </div>
+        </div>
+        <div class="sens-input-group">
+          <label class="sens-label">マウスパッドサイズ</label>
+          <select id="mouse-pad" class="sens-input">
+            <option value="小（30cm以下）">小（30cm以下）</option>
+            <option value="中（30〜45cm）" selected>中（30〜45cm）</option>
+            <option value="大（45cm以上）">大（45cm以上）</option>
+          </select>
+        </div>
+      </div>
+      <div class="sens-input-group" style="margin-top:0.75rem;">
+        <label class="sens-label">プレイスタイル・悩み（自由記述）</label>
+        <textarea id="mouse-note" class="form-textarea" rows="3"
+          placeholder="例：フリックが安定しない、ローセンシにしたいが照準がブレるなど"></textarea>
+      </div>
+      <button class="sens-ai-btn" id="btn-mouse-analyze">
+        <i class="fas fa-robot"></i> AIに感度を分析・提案してもらう
+      </button>
+    </div>
+
+    <!-- AI結果表示エリア -->
+    <div id="sens-result" class="sens-result" style="display:none;">
+      <div class="sens-result-header">
+        <i class="fas fa-robot"></i> AIからの提案
+      </div>
+      <div id="sens-result-content" class="sens-result-content"></div>
+    </div>
+
+  </section>
+
 </main>
 
 <!-- ===== モーダル：レジェンド追加・編集 ===== -->
@@ -138,7 +280,7 @@
         <div class="form-row">
           <label class="form-label">クラス</label>
           <select id="legend-class" class="form-input">
-            <option value="スキャン">スキャン</option>
+            <option value="リコン">リコン</option>
             <option value="スカーミッシャー">スカーミッシャー</option>
             <option value="サポート">サポート</option>
             <option value="コントローラー">コントローラー</option>
@@ -152,9 +294,36 @@
         <input type="url" id="legend-image" class="form-input" placeholder="https://...">
       </div>
 
-      <div class="form-row">
-        <label class="form-label">説明</label>
-        <textarea id="legend-description" class="form-textarea" rows="2" placeholder="キャラの説明"></textarea>
+      <!-- アビリティ -->
+      <div class="apex-ability-section">
+        <div class="apex-ability-section-title">アビリティ</div>
+        <div class="form-row">
+          <label class="form-label apex-ability-label passive">
+            <i class="fas fa-shoe-prints"></i> パッシブ
+          </label>
+          <input type="text" id="legend-passive-name" class="form-input" placeholder="パッシブ名">
+        </div>
+        <div class="form-row">
+          <textarea id="legend-passive-desc" class="form-textarea" rows="2" placeholder="パッシブの説明"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label apex-ability-label tactical">
+            <i class="fas fa-hand-paper"></i> アビリティ
+          </label>
+          <input type="text" id="legend-tactical-name" class="form-input" placeholder="アビリティ名">
+        </div>
+        <div class="form-row">
+          <textarea id="legend-tactical-desc" class="form-textarea" rows="2" placeholder="アビリティの説明"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label apex-ability-label ultimate">
+            <i class="fas fa-bolt"></i> ウルト
+          </label>
+          <input type="text" id="legend-ultimate-name" class="form-input" placeholder="ウルト名">
+        </div>
+        <div class="form-row">
+          <textarea id="legend-ultimate-desc" class="form-textarea" rows="2" placeholder="ウルトの説明"></textarea>
+        </div>
       </div>
 
       <!-- LV2パーク -->
@@ -162,17 +331,29 @@
         <div class="apex-perk-section-title">
           <span class="apex-lv-badge lv2">LV2</span> パーク
         </div>
-        <div class="form-row">
+        <div class="form-row apex-perk-recommend-row">
           <label class="form-label">LV2 パーク①　名前</label>
-          <input type="text" id="perk-lv2-1-name" class="form-input" placeholder="パーク名">
+          <div class="apex-perk-name-wrap">
+            <input type="text" id="perk-lv2-1-name" class="form-input" placeholder="パーク名">
+            <label class="apex-recommend-check" title="おすすめ">
+              <input type="checkbox" id="perk-lv2-1-rec">
+              <span class="apex-recommend-label"><i class="fas fa-star"></i> おすすめ</span>
+            </label>
+          </div>
         </div>
         <div class="form-row">
           <label class="form-label">LV2 パーク①　効果</label>
           <textarea id="perk-lv2-1-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
         </div>
-        <div class="form-row">
+        <div class="form-row apex-perk-recommend-row">
           <label class="form-label">LV2 パーク②　名前</label>
-          <input type="text" id="perk-lv2-2-name" class="form-input" placeholder="パーク名">
+          <div class="apex-perk-name-wrap">
+            <input type="text" id="perk-lv2-2-name" class="form-input" placeholder="パーク名">
+            <label class="apex-recommend-check" title="おすすめ">
+              <input type="checkbox" id="perk-lv2-2-rec">
+              <span class="apex-recommend-label"><i class="fas fa-star"></i> おすすめ</span>
+            </label>
+          </div>
         </div>
         <div class="form-row">
           <label class="form-label">LV2 パーク②　効果</label>
@@ -185,17 +366,29 @@
         <div class="apex-perk-section-title">
           <span class="apex-lv-badge lv3">LV3</span> パーク
         </div>
-        <div class="form-row">
+        <div class="form-row apex-perk-recommend-row">
           <label class="form-label">LV3 パーク①　名前</label>
-          <input type="text" id="perk-lv3-1-name" class="form-input" placeholder="パーク名">
+          <div class="apex-perk-name-wrap">
+            <input type="text" id="perk-lv3-1-name" class="form-input" placeholder="パーク名">
+            <label class="apex-recommend-check" title="おすすめ">
+              <input type="checkbox" id="perk-lv3-1-rec">
+              <span class="apex-recommend-label"><i class="fas fa-star"></i> おすすめ</span>
+            </label>
+          </div>
         </div>
         <div class="form-row">
           <label class="form-label">LV3 パーク①　効果</label>
           <textarea id="perk-lv3-1-effect" class="form-textarea" rows="2" placeholder="効果の説明"></textarea>
         </div>
-        <div class="form-row">
+        <div class="form-row apex-perk-recommend-row">
           <label class="form-label">LV3 パーク②　名前</label>
-          <input type="text" id="perk-lv3-2-name" class="form-input" placeholder="パーク名">
+          <div class="apex-perk-name-wrap">
+            <input type="text" id="perk-lv3-2-name" class="form-input" placeholder="パーク名">
+            <label class="apex-recommend-check" title="おすすめ">
+              <input type="checkbox" id="perk-lv3-2-rec">
+              <span class="apex-recommend-label"><i class="fas fa-star"></i> おすすめ</span>
+            </label>
+          </div>
         </div>
         <div class="form-row">
           <label class="form-label">LV3 パーク②　効果</label>
@@ -265,6 +458,15 @@
       </div>
 
       <div class="form-row">
+        <label class="apex-carepackage-check">
+          <input type="checkbox" id="weapon-carepackage">
+          <span class="apex-carepackage-label">
+            <i class="fas fa-box"></i> ケアパッケージ武器
+          </span>
+        </label>
+      </div>
+
+      <div class="form-row">
         <label class="form-label">補足</label>
         <textarea id="weapon-note" class="form-textarea" rows="3" placeholder="自由にメモできます"></textarea>
       </div>
@@ -312,5 +514,6 @@
 <div id="toast" class="toast"></div>
 
 <script src="js/apex.js"></script>
+<script src="js/settings.js"></script>
 </body>
 </html>

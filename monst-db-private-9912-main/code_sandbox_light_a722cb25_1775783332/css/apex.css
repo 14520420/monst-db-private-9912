@@ -428,3 +428,250 @@ body.edit-mode .apex-card:active { cursor: grabbing; }
   line-height: 1.65;
   background: var(--bg-sub);
 }
+
+
+/* ============================================================
+   感度調整ビュー
+   ============================================================ */
+
+/* タブ切り替え */
+.sens-type-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+}
+.sens-type-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sens-type-tab:hover { border-color: var(--ink); color: var(--ink); }
+.sens-type-tab.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+/* パネル共通 */
+.sens-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.sens-panel-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 1.1rem;
+}
+
+/* DPIセクション */
+.sens-dpi-section {
+  background: var(--bg-sub);
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.sens-dpi-input {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  font-family: var(--font-display) !important;
+}
+
+/* 入力グリッド */
+.sens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.sens-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sens-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sens-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sens-input {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  transition: border-color var(--transition);
+}
+.sens-input:focus {
+  outline: none;
+  border-color: var(--ink);
+  background: var(--bg-card);
+}
+.sens-input[readonly] {
+  background: var(--bg-sub);
+  color: var(--ink-2);
+  cursor: default;
+}
+.sens-unit {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-family: var(--font-display);
+}
+
+/* AIボタン */
+.sens-ai-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 12px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.01em;
+}
+.sens-ai-btn:hover:not(:disabled) {
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.sens-ai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.sens-ai-btn i { font-size: 1rem; }
+
+/* 結果エリア */
+.sens-result {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: fadeUpSoft 0.3s ease both;
+}
+.sens-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.9rem 1.3rem;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.sens-result-content {
+  padding: 1.3rem;
+}
+.sens-result-body {
+  font-size: 0.85rem;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.sens-result-body p { margin-bottom: 0.75rem; }
+.sens-result-body ul {
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.sens-result-body li { margin-bottom: 0.35rem; }
+.sens-result-body strong { color: var(--ink); }
+.sens-result-h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+.sens-result-h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0.75rem 0 0.35rem;
+}
+
+/* ローディング */
+.sens-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2rem;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+}
+.sens-loading i { font-size: 1.2rem; color: var(--ink-2); }
+
+/* エラー */
+.sens-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem;
+  color: var(--danger);
+  font-size: 0.85rem;
+  background: rgba(214,54,54,0.06);
+  border-radius: var(--radius-sm);
+}
+
+/* コピーボタン */
+.sens-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1rem;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sens-copy-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .sens-grid { grid-template-columns: 1fr 1fr; }
+  .sens-type-tabs { flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+  .sens-grid { grid-template-columns: 1fr; }
+}

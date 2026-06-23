@@ -8,6 +8,8 @@
 const API_KEY         = '$2a$10$joap43smKkXaRUqJnyLmH.WXhlFfhDqp9syZ978elHejCGT8amtQC';
 const LEGEND_BIN_URL  = 'https://api.jsonbin.io/v3/b/69fd3b43250b1311c31c81df';
 const WEAPON_BIN_URL  = 'https://api.jsonbin.io/v3/b/69fd3b1e250b1311c31c80c7';
+// アップデート情報はlocalStorageで管理（JSONBin不要）
+const UPDATE_STORAGE_KEY = 'apex_updates_v1';
 
 const HEADERS_READ = {
   'X-Master-Key': API_KEY,
@@ -43,6 +45,7 @@ const CLASS_SHORT = {
 // ===== 状態管理 =====
 let legends         = [];
 let weapons         = [];
+let updates         = []; // アップデート情報
 let isEditMode      = false;
 let draggedId       = null;
 let draggedType     = null;
@@ -80,6 +83,11 @@ async function loadAllData() {
     legends = [];
     weapons = [];
   }
+  // アップデート情報はlocalStorageから
+  try {
+    const raw = localStorage.getItem(UPDATE_STORAGE_KEY);
+    updates = raw ? JSON.parse(raw) : [];
+  } catch { updates = []; }
 }
 
 /* ==========================================================
@@ -147,8 +155,36 @@ function setupEventListeners() {
     renderAll();
   };
 
-  // レジェンド追加
-  document.getElementById('btn-add-legend').onclick = () => openLegendModal();
+  // 感度タブ切り替え
+  document.querySelectorAll('.sens-type-tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.sens-type-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const type = tab.dataset.senstype;
+      const ctrlPanel = document.getElementById('sens-controller');
+      const mousePanel = document.getElementById('sens-mouse');
+      const resultEl  = document.getElementById('sens-result');
+      if (ctrlPanel)  ctrlPanel.style.display  = type === 'controller' ? 'block' : 'none';
+      if (mousePanel) mousePanel.style.display  = type === 'mouse'      ? 'block' : 'none';
+      if (resultEl)   resultEl.style.display    = 'none';
+    };
+  });
+
+  // eDPI自動計算
+  const calcEdpi = () => {
+    const dpi  = parseFloat(document.getElementById('mouse-dpi')?.value)  || 0;
+    const sens = parseFloat(document.getElementById('mouse-sens')?.value) || 0;
+    const el   = document.getElementById('mouse-edpi-display');
+    if (el) el.value = dpi && sens ? Math.round(dpi * sens).toString() : '';
+  };
+  document.getElementById('mouse-dpi')?.addEventListener('input',  calcEdpi);
+  document.getElementById('mouse-sens')?.addEventListener('input', calcEdpi);
+
+  // コントローラー分析
+  document.getElementById('btn-ctrl-analyze')?.addEventListener('click', analyzeController);
+
+  // マウス分析
+  document.getElementById('btn-mouse-analyze')?.addEventListener('click', analyzeMouse);
   document.getElementById('btn-legend-modal-close').onclick = closeLegendModal;
   document.getElementById('btn-legend-cancel').onclick = closeLegendModal;
   document.getElementById('modal-legend').addEventListener('click', (e) => {
@@ -770,4 +806,174 @@ function showToast(message, type = '') {
   toast.style.display = 'block';
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+/* ==========================================================
+   AI感度調整アドバイザー
+   ========================================================== */
+
+function setSensLoading(isLoading) {
+  const resultEl  = document.getElementById('sens-result');
+  const contentEl = document.getElementById('sens-result-content');
+  const btns = [
+    document.getElementById('btn-ctrl-analyze'),
+    document.getElementById('btn-mouse-analyze')
+  ];
+  btns.forEach(b => { if (b) b.disabled = isLoading; });
+
+  if (isLoading) {
+    resultEl.style.display   = 'block';
+    contentEl.innerHTML = `
+      <div class="sens-loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>AIが分析中です。少々お待ちください...</span>
+      </div>`;
+  }
+}
+
+function renderSensResult(text) {
+  const resultEl  = document.getElementById('sens-result');
+  const contentEl = document.getElementById('sens-result-content');
+  resultEl.style.display = 'block';
+
+  // マークダウン風の簡易整形
+  const html = text
+    .replace(/^### (.+)$/gm, '<h4 class="sens-result-h3">$1</h4>')
+    .replace(/^## (.+)$/gm,  '<h3 class="sens-result-h2">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)$/gm,   '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^(?!<[hul])/gm, '')
+    .trim();
+
+  contentEl.innerHTML = `<div class="sens-result-body">${html}</div>
+    <button class="sens-copy-btn" id="btn-sens-copy">
+      <i class="fas fa-copy"></i> コピー
+    </button>`;
+
+  document.getElementById('btn-sens-copy')?.addEventListener('click', () => {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('クリップボードにコピーしました', 'success');
+    });
+  });
+
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function callSensAI(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model:      'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages:   [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API Error: ${res.status} ${err}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || 'AIからの応答を取得できませんでした。';
+}
+
+async function analyzeController() {
+  const lookH    = document.getElementById('ctrl-look-h')?.value || '未入力';
+  const lookV    = document.getElementById('ctrl-look-v')?.value || '未入力';
+  const adsH     = document.getElementById('ctrl-ads-h')?.value  || '未入力';
+  const adsV     = document.getElementById('ctrl-ads-v')?.value  || '未入力';
+  const deadzone = document.getElementById('ctrl-deadzone')?.value || '未入力';
+  const curve    = document.getElementById('ctrl-curve')?.value  || 'クラシック';
+  const note     = document.getElementById('ctrl-note')?.value   || 'なし';
+
+  setSensLoading(true);
+
+  const prompt = `あなたはAPEX Legendsのコントローラー感度調整の専門家です。
+以下のユーザーの現在の感度設定を分析し、改善提案をしてください。
+
+【現在の設定】
+- 視点移動速度（横）: ${lookH} / 10
+- 視点移動速度（縦）: ${lookV} / 10
+- ADS感度（横）: ${adsH} / 10
+- ADS感度（縦）: ${adsV} / 10
+- スティックデッドゾーン: ${deadzone}
+- 応答カーブ: ${curve}
+- プレイヤーの悩み・スタイル: ${note}
+
+【回答形式】
+以下の項目を日本語で具体的に回答してください：
+1. 現在の設定の評価（良い点・問題点）
+2. 推奨設定値（具体的な数値で）
+3. 調整のポイント・理由
+4. 練習方法のアドバイス
+
+回答は簡潔にまとめ、初心者にも分かりやすく説明してください。`;
+
+  try {
+    const result = await callSensAI(prompt);
+    renderSensResult(result);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('sens-result-content').innerHTML =
+      `<div class="sens-error"><i class="fas fa-exclamation-triangle"></i> 分析に失敗しました。しばらくしてから再試行してください。</div>`;
+    document.getElementById('sens-result').style.display = 'block';
+  } finally {
+    setSensLoading(false);
+  }
+}
+
+async function analyzeMouse() {
+  const dpi  = document.getElementById('mouse-dpi')?.value;
+  if (!dpi) {
+    showToast('まずDPIを入力してください', 'error');
+    document.getElementById('mouse-dpi')?.focus();
+    return;
+  }
+
+  const sens  = document.getElementById('mouse-sens')?.value || '未入力';
+  const ads   = document.getElementById('mouse-ads')?.value  || '未入力';
+  const edpi  = document.getElementById('mouse-edpi-display')?.value || '未計算';
+  const pad   = document.getElementById('mouse-pad')?.value  || '中';
+  const note  = document.getElementById('mouse-note')?.value || 'なし';
+
+  setSensLoading(true);
+
+  const prompt = `あなたはAPEX Legendsのマウス感度調整の専門家です。
+以下のユーザーの現在の設定を分析し、最適な感度を提案してください。
+
+【現在の設定】
+- マウスDPI: ${dpi} DPI
+- ゲーム内感度: ${sens}
+- 現在のeDPI: ${edpi}（DPI × ゲーム内感度）
+- ADS感度倍率: ${ads}倍
+- マウスパッドサイズ: ${pad}
+- プレイヤーの悩み・スタイル: ${note}
+
+【回答形式】
+以下の項目を日本語で具体的に回答してください：
+1. 現在のeDPI（${edpi}）の評価
+2. 推奨eDPI範囲とその理由
+3. 推奨するゲーム内感度の具体的な数値（DPI ${dpi}の場合）
+4. ADS感度倍率の推奨値と理由
+5. 感度移行時の練習方法アドバイス
+
+APEXのプロ・上位プレイヤーの一般的なeDPI範囲（800〜2000程度）を参考に、具体的な数値で回答してください。`;
+
+  try {
+    const result = await callSensAI(prompt);
+    renderSensResult(result);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('sens-result-content').innerHTML =
+      `<div class="sens-error"><i class="fas fa-exclamation-triangle"></i> 分析に失敗しました。しばらくしてから再試行してください。</div>`;
+    document.getElementById('sens-result').style.display = 'block';
+  } finally {
+    setSensLoading(false);
+  }
 }
